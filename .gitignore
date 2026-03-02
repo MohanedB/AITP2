@@ -1,32 +1,66 @@
-# Prerequisites
-*.d
+### Visual Studio / C++ ###
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# VS config
+.vs
+.suo
+.user
+.userosscache
+.sln.docstates
+
+# Build results (J'ai commenté ceux qui bloquaient tes DLLs)
+[Bb]uild
+# [Dd]ebug
+[Dd]ebugPublic
+[Rr]elease
+[Rr]eleases
+# x64
+x86
+ARM
+[Aa][Rr][Mm]64
+ipch
+
+# Compiled object & debug files (On ignore les fichiers inutiles, pas les dossiers)
 *.obj
-
-# Precompiled Headers
-*.gch
+*.o
 *.pch
+*.pdb
+*.idb
+*.ilk
+*.log
+*.tlog
+*.tmp
+*.cache
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# Auto-generated build files
+*.aps
+*.ncb
+*.opendb
+*.sdf
+*.sln.ide
+*.VC.db
+*.VC.opendb
 
-# Fortran module files
-*.mod
-*.smod
+# CMake
+[Cc]MakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+CMakeFiles
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# OS crap
+.DS_Store
+Thumbs.db
 
-# Executables
-*.exe
-*.out
-*.app
+# --- LA PARTIE IMPORTANTE ---
+# Force Git à prendre tes DLLs et ta police, peu importe où ils sont
+!*.dll
+!*.lib
+!*.ttf
+!*.png
+!*.wav
+
+### SFML External libs ###
+External/bin
+External/lib/cmake
+External/examples
+External/doc
