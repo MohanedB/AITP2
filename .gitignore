@@ -1,25 +1,26 @@
 ### Visual Studio / C++ ###
 
-# VS config
-.vs
-.suo
-.user
-.userosscache
-.sln.docstates
+# Configuration VS
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-# Build results (J'ai commenté ceux qui bloquaient tes DLLs)
-[Bb]uild
-# [Dd]ebug
-[Dd]ebugPublic
-[Rr]elease
-[Rr]eleases
-# x64
-x86
-ARM
-[Aa][Rr][Mm]64
-ipch
+# Dossiers de compilation (IL FAUT les ignorer pour éviter les conflits !)
+[Bb]uild/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+ARM/
+[Aa][Rr][Mm]64/
+ipch/
+Out/
 
-# Compiled object & debug files (On ignore les fichiers inutiles, pas les dossiers)
+# Fichiers objets, de debug et exécutables locaux
 *.obj
 *.o
 *.pch
@@ -30,8 +31,9 @@ ipch
 *.tlog
 *.tmp
 *.cache
+*.exe
 
-# Auto-generated build files
+# Fichiers auto-générés par VS
 *.aps
 *.ncb
 *.opendb
@@ -41,26 +43,20 @@ ipch
 *.VC.opendb
 
 # CMake
-[Cc]MakeFiles
+[Cc]MakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
-CMakeFiles
 
-# OS crap
+# Fichiers OS
 .DS_Store
 Thumbs.db
 
 # --- LA PARTIE IMPORTANTE ---
-# Force Git à prendre tes DLLs et ta police, peu importe où ils sont
+# Force Git à prendre tes DLLs, libs et assets peu importe où ils sont
 !*.dll
 !*.lib
 !*.ttf
 !*.png
 !*.wav
-
-### SFML External libs ###
-External/bin
-External/lib/cmake
-External/examples
-External/doc
+!*.jpg
