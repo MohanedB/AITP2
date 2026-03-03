@@ -8,7 +8,6 @@ HUD::HUD()
       fpsText(font), 
       instructionText(font) 
 {
-    // Chargement de la police (SFML 3)
     fontLoaded = font.openFromFile("arial.ttf");
     
     if (!fontLoaded) {

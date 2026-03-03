@@ -1,7 +1,6 @@
 ﻿#include "Grid.h"
 
 Grid::Grid(int w, int h, float size) : width(w), height(h), tileSize(size) {
-    // Initialisation de la grille vide
     for (int x = 0; x < width; ++x) {
         std::vector<Node> column;
         for (int y = 0; y < height; ++y) {
@@ -9,7 +8,6 @@ Grid::Grid(int w, int h, float size) : width(w), height(h), tileSize(size) {
         }
         nodes.push_back(column);
     }
-    
     GenerateLevel();
 }
 
@@ -49,35 +47,28 @@ void Grid::GenerateLevel() {
         "########################################"
     };
 
-    // Lecture du dessin pour générer les nœuds de la carte
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            if (mapLayout[y][x] == '#') {
-                SetObstacle(x, y, true);
-            }
+            if (mapLayout[y][x] == '#') SetObstacle(x, y, true);
         }
     }
 }
 
 void Grid::SetObstacle(int x, int y, bool isObstacle) {
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-        nodes[x][y].isObstacle = isObstacle;
-    }
+    if (x >= 0 && x < width && y >= 0 && y < height) nodes[x][y].isObstacle = isObstacle;
 }
 
 Node* Grid::getNode(int x, int y) {
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-        return &nodes[x][y];
-    }
+    if (x >= 0 && x < width && y >= 0 && y < height) return &nodes[x][y];
     return nullptr;
 }
 
+// Convertit la grille en graphe en trouvant les cases adjacentes marchables
 std::vector<Node*> Grid::getNeighbors(Node* node) {
     std::vector<Node*> neighbors;
-    // Vérification des 8 directions autour de la tuile
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
-            if (x == 0 && y == 0) continue; // On ignore la case centrale
+            if (x == 0 && y == 0) continue;
 
             int checkX = node->gridX + x;
             int checkY = node->gridY + y;
@@ -91,7 +82,6 @@ std::vector<Node*> Grid::getNeighbors(Node* node) {
 }
 
 void Grid::ResetNodes() {
-    // Nettoie les calculs A* pour qu'une nouvelle recherche puisse commencer de zéro
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             nodes[x][y].gCost = 0;
@@ -109,11 +99,11 @@ void Grid::Draw(sf::RenderWindow& window) {
         for (int y = 0; y < height; ++y) {
             if (nodes[x][y].isObstacle) {
                 wallTile.setPosition({ x * tileSize, y * tileSize });
-                wallTile.setFillColor(sf::Color(70, 80, 95)); // Gris-bleu
+                wallTile.setFillColor(sf::Color(70, 80, 95));
                 window.draw(wallTile);
             } else {
                 floorTile.setPosition({ x * tileSize, y * tileSize });
-                floorTile.setFillColor(sf::Color(20, 20, 25)); // Sombre
+                floorTile.setFillColor(sf::Color(20, 20, 25));
                 window.draw(floorTile);
             }
         }

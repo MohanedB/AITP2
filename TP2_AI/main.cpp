@@ -1,12 +1,14 @@
 #include <SFML/Graphics.hpp>
 #include <optional>
+#include <vector>
 #include "Character/Intrus.h"
 #include "Map/Grid.h"
+#include "AI/Pathfinder.h"
 #include "UI/HUD.h"
 
 int main() {
-    // ON AGRANDIT LA FENÊTRE : 800 (Map) + 200 (HUD) = 1000 pixels de large
-    sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - TP2 : Setup HUD Propre");
+    // Fenêtre 1000x600 : 800 pour la map + 200 pour la barre latérale (HUD)
+    sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - Infrastructure Finale - Personne 1");
     window.setFramerateLimit(60);
 
     Grid gameWorld(40, 30, 20.0f);
@@ -14,6 +16,7 @@ int main() {
     HUD interfaceJoueur;
     
     sf::Clock clock;
+    bool showDebugPath = true; // Pour activer/desactiver le test du A*
 
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
@@ -26,25 +29,48 @@ int main() {
                 if (keyPressed->code == sf::Keyboard::Key::Escape) {
                     window.close();
                 }
+                // Appuie sur 'T' pour toggler le chemin de test
+                if (keyPressed->code == sf::Keyboard::Key::T) {
+                    showDebugPath = !showDebugPath;
+                }
             }
         }
 
-        // --- UPDATE ---
+        // --- 1. UPDATE ---
         joueur.Update(deltaTime, gameWorld);
-        interfaceJoueur.Update(deltaTime, "PATROUILLE");
+        
+        // On simule l'état pour le HUD
+        interfaceJoueur.Update(deltaTime, showDebugPath ? "DEBUG PATH" : "MANUAL CONTROL");
 
-        // --- RENDER ---
+        // --- 2. PATHFINDING TEST ---
+        std::vector<sf::Vector2f> currentPath;
+        if (showDebugPath) {
+            sf::Vector2i mousePosi = sf::Mouse::getPosition(window);
+            sf::Vector2f mousePosf(static_cast<float>(mousePosi.x), static_cast<float>(mousePosi.y));
+            
+            // Calcul du A* du joueur vers la souris
+            currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
+        }
+
+        // --- 3. RENDER ---
         window.clear(sf::Color::Black);
         
-        // La zone de jeu s'affiche de 0 a 800
-        gameWorld.Draw(window);
-        joueur.Draw(window);
+        gameWorld.Draw(window); // Dessine le labyrinthe
         
-        // Le HUD s'affiche dans sa barre a droite de 800 a 1000
-        interfaceJoueur.Draw(window);
+        // Dessin du chemin rouge 
+        if (showDebugPath && currentPath.size() > 1) {
+            sf::VertexArray lines(sf::PrimitiveType::LineStrip, currentPath.size());
+            for (size_t i = 0; i < currentPath.size(); ++i) {
+                lines[i].position = currentPath[i];
+                lines[i].color = sf::Color::Red;
+            }
+            window.draw(lines);
+        }
+
+        joueur.Draw(window); // Dessine l'intrus WASD
+        interfaceJoueur.Draw(window); // Dessine le HUD
         
         window.display();
     }
-    
     return 0;
 }
