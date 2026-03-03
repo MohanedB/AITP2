@@ -6,6 +6,10 @@
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
 
+// On inclut les vrais fichiers de ton pote
+#include "FSM/StateMachine.h"
+// #include "AgentBase/AgentBase.h" // Décommente ça s'il faut aussi déclarer son agent ici
+
 int main() {
     // Fenêtre 1000x600 : 800 pour la map + 200 pour la barre latérale (HUD)
     sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - Infrastructure Finale - Personne 1");
@@ -14,6 +18,8 @@ int main() {
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
     HUD interfaceJoueur;
+    
+    // On instancie la machine à états de ton pote
     StateMachine stateMachine = StateMachine();
     
     sf::Clock clock;
@@ -40,14 +46,14 @@ int main() {
         // --- 1. UPDATE ---
         joueur.Update(deltaTime, gameWorld);
 
-        
-        // On simule l'état pour le HUD
-        interfaceJoueur.Update(deltaTime, showDebugPath ? "DEBUG PATH" : "MANUAL CONTROL");
-
+        // LA CORRECTION EST ICI : 
+        // On donne directement la stateMachine de ton pote au HUD !
+        interfaceJoueur.Update(deltaTime, stateMachine);
 
         // --- 2. PATHFINDING TEST ---
         std::vector<sf::Vector2f> currentPath;
         if (showDebugPath) {
+            // Puisque l'agent de ton pote n'est pas encore branché, on garde la souris pour tester
             sf::Vector2i mousePosi = sf::Mouse::getPosition(window);
             sf::Vector2f mousePosf(static_cast<float>(mousePosi.x), static_cast<float>(mousePosi.y));
             
