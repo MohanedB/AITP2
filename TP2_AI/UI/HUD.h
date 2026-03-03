@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <SFML/Graphics.hpp>
 #include <string>
+#include "../FSM/StateMachine.h"
 
 class HUD {
 private:
@@ -15,6 +16,6 @@ private:
 public:
     HUD();
     
-    void Update(float deltaTime, const std::string& currentState);
+    void Update(float deltaTime, StateMachine& state);
     void Draw(sf::RenderWindow& window);
 };

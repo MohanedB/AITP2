@@ -12,6 +12,7 @@ int main() {
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
     HUD interfaceJoueur;
+    StateMachine stateMachine = StateMachine();
     
     sf::Clock clock;
 
@@ -31,7 +32,7 @@ int main() {
 
         // --- UPDATE ---
         joueur.Update(deltaTime, gameWorld);
-        interfaceJoueur.Update(deltaTime, "PATROUILLE");
+        interfaceJoueur.Update(deltaTime, stateMachine);
 
         // --- RENDER ---
         window.clear(sf::Color::Black);
