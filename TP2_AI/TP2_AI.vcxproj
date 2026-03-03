@@ -128,14 +128,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AI\Pathfinder.cpp" />
+    <ClCompile Include="AgentBase\AgentBase.cpp" />
     <ClCompile Include="Character\Intrus.cpp" />
+    <ClCompile Include="FSM\StateMachine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map\Grid.cpp" />
     <ClCompile Include="UI\HUD.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AI\Pathfinder.h" />
+    <ClInclude Include="AgentBase\AgentBase.h" />
     <ClInclude Include="Character\Intrus.h" />
+    <ClInclude Include="FSM\StateMachine.h" />
     <ClInclude Include="Map\Grid.h" />
     <ClInclude Include="UI\HUD.h" />
   </ItemGroup>

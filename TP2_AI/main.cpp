@@ -14,6 +14,7 @@ int main() {
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
     HUD interfaceJoueur;
+    StateMachine stateMachine = StateMachine();
     
     sf::Clock clock;
     bool showDebugPath = true; // Pour activer/desactiver le test du A*
@@ -38,9 +39,11 @@ int main() {
 
         // --- 1. UPDATE ---
         joueur.Update(deltaTime, gameWorld);
+
         
         // On simule l'état pour le HUD
         interfaceJoueur.Update(deltaTime, showDebugPath ? "DEBUG PATH" : "MANUAL CONTROL");
+
 
         // --- 2. PATHFINDING TEST ---
         std::vector<sf::Vector2f> currentPath;

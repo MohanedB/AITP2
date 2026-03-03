@@ -45,10 +45,10 @@ HUD::HUD()
     instructionText.setString("WASD : Bouger\nESC : Quitter");
 }
 
-void HUD::Update(float deltaTime, const std::string& currentState) {
+void HUD::Update(float deltaTime, StateMachine& state) {
     if (!fontLoaded) return;
 
-    fsmStateText.setString("Etat FSM :\n" + currentState);
+    fsmStateText.setString(state.GetCurrentState());
 
     if (deltaTime > 0.0f) {
         int fps = static_cast<int>(std::round(1.0f / deltaTime));
