@@ -7,6 +7,9 @@
 #include "UI/HUD.h"
 
 // On inclut les vrais fichiers de ton pote
+#include <cmath>
+
+#include "AgentBase/AgentBase.h"
 #include "FSM/StateMachine.h"
 // #include "AgentBase/AgentBase.h" // Décommente ça s'il faut aussi déclarer son agent ici
 
@@ -17,6 +20,7 @@ int main() {
 
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
+    AgentBase ennemi({770.0f, 570.0f});
     HUD interfaceJoueur;
     
     // On instancie la machine à états de ton pote
@@ -45,6 +49,8 @@ int main() {
 
         // --- 1. UPDATE ---
         joueur.Update(deltaTime, gameWorld);
+        ennemi.SetPlayerPosition(joueur.GetPosition());
+        ennemi.Update(deltaTime, gameWorld);
 
         // LA CORRECTION EST ICI : 
         // On donne directement la stateMachine de ton pote au HUD !
@@ -77,6 +83,7 @@ int main() {
         }
 
         joueur.Draw(window); // Dessine l'intrus WASD
+        ennemi.Draw(window); //Dessine l'ennemi
         interfaceJoueur.Draw(window); // Dessine le HUD
         
         window.display();
