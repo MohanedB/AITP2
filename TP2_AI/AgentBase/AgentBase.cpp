@@ -17,16 +17,21 @@ void AgentBase::Draw(sf::RenderWindow& window)
     window.draw(shape);
 }
 
-void AgentBase::SetPlayerPosition(sf::Vector2f position) const
+void AgentBase::SetPlayerPosition(sf::Vector2f position)
 {
-    position = playerPosition;
+    playerPosition = position;
 }
 
-
-sf::Vector2f AgentBase::GetPlayerPosition() const
+sf::Vector2f AgentBase::GetPlayerPosition()
 {
     return playerPosition;
 }
+
+sf::Vector2f AgentBase::GetPosition()
+{
+    return position;
+}
+
 
 void AgentBase::Update(float deltaTime, Grid& grid)
 {
@@ -66,8 +71,10 @@ void AgentBase::Update(float deltaTime, Grid& grid)
         position.y = nextPosY.y;
     }
     
-    shape.setPosition(position);
+    shape.setPosition(position); 
+}
 
-    //Utilisé pour tests de détection/voir si ennemi sait la location du joueur, temporaire
-    //shape.setPosition(GetPlayerPosition());
+StateMachine& AgentBase::GetEnnemyState()
+{
+    return ennemyState;
 }

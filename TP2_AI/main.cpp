@@ -23,9 +23,6 @@ int main() {
     AgentBase ennemi({770.0f, 570.0f});
     HUD interfaceJoueur;
     
-    // On instancie la machine à états de ton pote
-    StateMachine stateMachine = StateMachine();
-    
     sf::Clock clock;
     bool showDebugPath = true; // Pour activer/desactiver le test du A*
 
@@ -40,7 +37,7 @@ int main() {
                 if (keyPressed->code == sf::Keyboard::Key::Escape) {
                     window.close();
                 }
-                // Appuie sur 'T' pour toggler le chemin de test
+                // Appuie sur 'T' pour toggle le chemin de test
                 if (keyPressed->code == sf::Keyboard::Key::T) {
                     showDebugPath = !showDebugPath;
                 }
@@ -51,20 +48,21 @@ int main() {
         joueur.Update(deltaTime, gameWorld);
         ennemi.SetPlayerPosition(joueur.GetPosition());
         ennemi.Update(deltaTime, gameWorld);
-
-        // LA CORRECTION EST ICI : 
-        // On donne directement la stateMachine de ton pote au HUD !
-        interfaceJoueur.Update(deltaTime, stateMachine);
+        
+        
+        interfaceJoueur.Update(deltaTime, ennemi.GetEnnemyState());
 
         // --- 2. PATHFINDING TEST ---
         std::vector<sf::Vector2f> currentPath;
         if (showDebugPath) {
-            // Puisque l'agent de ton pote n'est pas encore branché, on garde la souris pour tester
+            // Puisque l'agent n'est pas encore branché, on garde la souris pour tester
             sf::Vector2i mousePosi = sf::Mouse::getPosition(window);
             sf::Vector2f mousePosf(static_cast<float>(mousePosi.x), static_cast<float>(mousePosi.y));
             
             // Calcul du A* du joueur vers la souris
-            currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
+            //Path du joueur avec souris
+            //currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
+            currentPath = Pathfinder::FindPath(gameWorld, ennemi.GetPosition(), joueur.GetPosition());
         }
 
         // --- 3. RENDER ---

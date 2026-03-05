@@ -42,7 +42,7 @@ HUD::HUD()
     instructionText.setCharacterSize(14);
     instructionText.setFillColor(sf::Color(180, 180, 180));
     instructionText.setPosition({ 810.f, 500.f });
-    instructionText.setString("WASD : Bouger\nESC : Quitter");
+    instructionText.setString("T : Toggle Affichage de Pathfinding\nWASD : Bouger\nESC : Quitter");
 }
 
 void HUD::Update(float deltaTime, StateMachine& state) {
