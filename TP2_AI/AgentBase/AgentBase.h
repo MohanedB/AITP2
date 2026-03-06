@@ -4,6 +4,13 @@
 #include "../FSM/StateMachine.h"
 #include "../Map/Grid.h"
 
+struct RayHit
+{
+    bool hit;
+    sf::Vector2f point;
+    float distance;
+};
+
 class AgentBase
 {
 public:
@@ -18,6 +25,11 @@ public:
     sf::Vector2f GetPosition();
     
     StateMachine& GetEnnemyState();
+
+    RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);
+    void RayCast(sf::RenderWindow& window, Grid& map, float mapScale);
+
+    void SetPatrolPoints();
     
 private:
     sf::CircleShape shape;
@@ -27,4 +39,8 @@ private:
     float radius;
     sf::Vector2f patrolPoints[11];
     StateMachine ennemyState = StateMachine();
+
+    float facingAngle = 0.0f;
+    float FOV = 60.0f;
+    int rayCount = 60;
 };

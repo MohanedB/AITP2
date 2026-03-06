@@ -39,10 +39,10 @@ HUD::HUD()
     fpsText.setPosition({ 815.f, 130.f });
 
     // Instructions
-    instructionText.setCharacterSize(14);
+    instructionText.setCharacterSize(13);
     instructionText.setFillColor(sf::Color(180, 180, 180));
     instructionText.setPosition({ 810.f, 500.f });
-    instructionText.setString("T : Toggle Affichage de Pathfinding\nWASD : Bouger\nESC : Quitter");
+    instructionText.setString("T : Toggle Affichage Pathfinding\nWASD : Bouger\nESC : Quitter");
 }
 
 void HUD::Update(float deltaTime, StateMachine& state) {

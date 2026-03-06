@@ -21,6 +21,7 @@ int main() {
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
     AgentBase ennemi({770.0f, 570.0f});
+    ennemi.SetPatrolPoints();
     HUD interfaceJoueur;
     
     sf::Clock clock;
@@ -48,7 +49,7 @@ int main() {
         joueur.Update(deltaTime, gameWorld);
         ennemi.SetPlayerPosition(joueur.GetPosition());
         ennemi.Update(deltaTime, gameWorld);
-        
+        ennemi.RayCast(window, gameWorld, 1.0f);
         
         interfaceJoueur.Update(deltaTime, ennemi.GetEnnemyState());
 
@@ -62,6 +63,8 @@ int main() {
             // Calcul du A* du joueur vers la souris
             //Path du joueur avec souris
             //currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
+
+            //Path de l'ennemi au joueur
             currentPath = Pathfinder::FindPath(gameWorld, ennemi.GetPosition(), joueur.GetPosition());
         }
 

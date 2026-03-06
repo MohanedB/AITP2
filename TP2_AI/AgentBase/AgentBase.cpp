@@ -78,3 +78,77 @@ StateMachine& AgentBase::GetEnnemyState()
 {
     return ennemyState;
 }
+
+RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist)
+{
+    float tileSize = grid.getTileSize();
+
+    // Normaliser la direction
+    float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+    if (len == 0) return { false, origin, 0 };
+    dir /= len;
+
+    sf::Vector2f pos = origin;
+    float traveled = 0.0f;
+    float step = 2.0f; // précision du raycast
+
+    while (traveled < maxDist)
+    {
+        pos += dir * step;
+        traveled += step;
+
+        int gx = static_cast<int>(pos.x / tileSize);
+        int gy = static_cast<int>(pos.y / tileSize);
+
+        Node* node = grid.getNode(gx, gy);
+
+        if (node == nullptr || node->isObstacle)
+        {
+            return { true, pos, traveled };
+        }
+    }
+
+    return { false, pos, maxDist };
+}
+
+
+void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale)
+{
+    float angleStart = facingAngle - FOV / 2.0f;
+
+    for (int i = 0; i < rayCount; i++)
+    {
+        float angle = angleStart + (FOV / rayCount) * i;
+
+        sf::Vector2f dir(std::cos(angle * 3.14159f / 180),
+                         std::sin(angle * 3.14159f / 180));
+
+        RayHit hit = CastRay(grid, position, dir, 300.0f);
+
+        // Dessin mini-map
+        sf::Vertex line[2];
+        line[0] = sf::Vertex();
+        line[0].color = sf::Color::Yellow;
+        line[0].position = position * mapScale;
+        line[1].color = sf::Color::Yellow;
+        line[1].position = hit.point * mapScale;
+
+        window.draw(line, 2, sf::PrimitiveType::Lines);
+    }
+}
+
+void AgentBase::SetPatrolPoints()
+{
+    patrolPoints[0] = position;
+    for (int i = 1; i < 11; i++)
+    {
+        if(patrolPoints[i - 1].x < 770.0f && patrolPoints[i - 1].y < 570.0f)
+        {
+            patrolPoints[i] = sf::Vector2f(patrolPoints[i - 1].x + 30.0f, patrolPoints[i - 1].y + 30.0f);
+        }
+        else
+        {
+            patrolPoints[i] = sf::Vector2f(patrolPoints[i - 1].x - 150.0f, patrolPoints[i - 1].y - 150.0f);
+        }
+    }
+}
