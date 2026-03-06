@@ -49,7 +49,6 @@ int main() {
         joueur.Update(deltaTime, gameWorld);
         ennemi.SetPlayerPosition(joueur.GetPosition());
         ennemi.Update(deltaTime, gameWorld);
-        ennemi.RayCast(window, gameWorld, 1.0f);
         
         interfaceJoueur.Update(deltaTime, ennemi.GetEnnemyState());
 
@@ -85,6 +84,7 @@ int main() {
 
         joueur.Draw(window); // Dessine l'intrus WASD
         ennemi.Draw(window); //Dessine l'ennemi
+        ennemi.RayCast(window, gameWorld, 1.0f);
         interfaceJoueur.Draw(window); // Dessine le HUD
         
         window.display();

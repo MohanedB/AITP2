@@ -35,20 +35,30 @@ sf::Vector2f AgentBase::GetPosition()
 
 void AgentBase::Update(float deltaTime, Grid& grid)
 {
-     sf::Vector2f movement(0.0f, 0.0f);
-    
-    if (movement.x != 0.0f || movement.y != 0.0f) {
-        float length = std::sqrt(movement.x * movement.x + movement.y * movement.y);
-        movement.x /= length;
-        movement.y /= length;
+    // 1) Cible actuelle
+    sf::Vector2f target = patrolPoints[currentPatrolPoint];
+
+    // 2) Direction vers la cible
+    sf::Vector2f movement = target - position;
+    float length = std::sqrt(movement.x * movement.x + movement.y * movement.y);
+
+    // Si on est proche du point → passer au suivant
+    if (length < 5.0f)
+    {
+        currentPatrolPoint = (currentPatrolPoint + 1) % 11;
+        return;
     }
-    
+
+    // Normalisation
+    movement /= length;
+
+    // Calcul des positions futures
     sf::Vector2f nextPosX = position;
     nextPosX.x += movement.x * speed * deltaTime;
 
     sf::Vector2f nextPosY = position;
     nextPosY.y += movement.y * speed * deltaTime;
-    
+
     auto isWall = [&](float px, float py) {
         float tileSize = grid.getTileSize();
         int gridX = static_cast<int>(px / tileSize);
@@ -56,23 +66,66 @@ void AgentBase::Update(float deltaTime, Grid& grid)
         Node* node = grid.getNode(gridX, gridY);
         return (node == nullptr || node->isObstacle);
     };
-    
+
+    bool collided = false;
+
+    // Collision X
     if (!isWall(nextPosX.x - radius, position.y - radius + 1) &&
         !isWall(nextPosX.x + radius, position.y - radius + 1) &&
         !isWall(nextPosX.x - radius, position.y + radius - 1) &&
         !isWall(nextPosX.x + radius, position.y + radius - 1)) {
         position.x = nextPosX.x;
     }
-    
+    else {
+        collided = true;
+    }
+
+    // Collision Y
     if (!isWall(position.x - radius + 1, nextPosY.y - radius) &&
         !isWall(position.x + radius - 1, nextPosY.y - radius) &&
         !isWall(position.x - radius + 1, nextPosY.y + radius) &&
         !isWall(position.x + radius - 1, nextPosY.y + radius)) {
         position.y = nextPosY.y;
     }
+    else {
+        collided = true;
+    }
     
-    shape.setPosition(position); 
+    // 3) Si collision → reculer et se décaler
+    if (collided)
+    {
+        // Reculer plus loin
+        position -= movement * speed * deltaTime * 2.0f;
+
+        // Calcul du vecteur perpendiculaire vers la droite
+        sf::Vector2f right(movement.y, -movement.x);
+
+        // Normalisation du vecteur right
+        float rlen = std::sqrt(right.x * right.x + right.y * right.y);
+        if (rlen != 0)
+            right /= rlen;
+
+        // Décalage latéral pour éviter de rester coincé
+        position += right * speed * deltaTime * 1.5f;
+
+        // Mettre à jour la position visuelle
+        shape.setPosition(position);
+
+        // Ajuster l'angle de vision pour suivre le mouvement
+        facingAngle = std::atan2(movement.y, movement.x) * 180.f / 3.14159265f;
+
+        return; // éviter de continuer le mouvement normal ce frame
+    }
+
+
+    // 4) Mettre à jour la position visuelle
+    shape.setPosition(position);
+
+    // 5) Mettre à jour l'angle du cône de vision
+    facingAngle = std::atan2(movement.y, movement.x) * 180.f / 3.14159265f;
 }
+
+
 
 StateMachine& AgentBase::GetEnnemyState()
 {
@@ -148,7 +201,7 @@ void AgentBase::SetPatrolPoints()
         }
         else
         {
-            patrolPoints[i] = sf::Vector2f(patrolPoints[i - 1].x - 150.0f, patrolPoints[i - 1].y - 150.0f);
+            patrolPoints[i] = sf::Vector2f(patrolPoints[i - 1].x - 300.0f, patrolPoints[i - 1].y - 300.0f);
         }
     }
 }

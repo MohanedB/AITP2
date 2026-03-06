@@ -40,7 +40,8 @@ private:
     sf::Vector2f patrolPoints[11];
     StateMachine ennemyState = StateMachine();
 
-    float facingAngle = 0.0f;
+    float facingAngle = 270.0f;
     float FOV = 60.0f;
     int rayCount = 60;
+    int currentPatrolPoint = 0;
 };
