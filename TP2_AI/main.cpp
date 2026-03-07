@@ -19,9 +19,18 @@ int main() {
     window.setFramerateLimit(60);
 
     Grid gameWorld(40, 30, 20.0f);
+    
     Intrus joueur({ 30.0f, 30.0f });
-    AgentBase ennemi({770.0f, 570.0f});
-    ennemi.SetPatrolPoints();
+    
+    AgentBase ennemi1({770.0f, 570.0f});
+    ennemi1.SetPatrolPoints();
+    
+    AgentBase ennemi2({370.0f, 270.0f});
+    ennemi2.SetPatrolPoints();
+    
+    AgentBase ennemi3({150.0f, 255.0f});
+    ennemi3.SetPatrolPoints();
+    
     HUD interfaceJoueur;
     
     sf::Clock clock;
@@ -47,10 +56,17 @@ int main() {
 
         // --- 1. UPDATE ---
         joueur.Update(deltaTime, gameWorld);
-        ennemi.SetPlayerPosition(joueur.GetPosition());
-        ennemi.Update(deltaTime, gameWorld);
         
-        interfaceJoueur.Update(deltaTime, ennemi.GetEnnemyState());
+        ennemi1.SetPlayerPosition(joueur.GetPosition());
+        ennemi1.Update(deltaTime, gameWorld);
+        
+        ennemi2.SetPlayerPosition(joueur.GetPosition());
+        ennemi2.Update(deltaTime, gameWorld);
+
+        ennemi3.SetPlayerPosition(joueur.GetPosition());
+        ennemi3.Update(deltaTime, gameWorld);
+        
+        interfaceJoueur.Update(deltaTime, ennemi1.GetEnnemyState());
 
         // --- 2. PATHFINDING TEST ---
         std::vector<sf::Vector2f> currentPath;
@@ -64,7 +80,7 @@ int main() {
             //currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
 
             //Path de l'ennemi au joueur
-            currentPath = Pathfinder::FindPath(gameWorld, ennemi.GetPosition(), joueur.GetPosition());
+            currentPath = Pathfinder::FindPath(gameWorld, ennemi1.GetPosition(), joueur.GetPosition());
         }
 
         // --- 3. RENDER ---
@@ -83,8 +99,16 @@ int main() {
         }
 
         joueur.Draw(window); // Dessine l'intrus WASD
-        ennemi.Draw(window); //Dessine l'ennemi
-        ennemi.RayCast(window, gameWorld, 1.0f);
+        
+        ennemi1.Draw(window); //Dessine l'ennemi
+        ennemi1.RayCast(window, gameWorld, 1.0f);
+        
+        ennemi2.Draw(window);
+        ennemi2.RayCast(window, gameWorld, 1.0f);
+
+        ennemi3.Draw(window);
+        ennemi3.RayCast(window, gameWorld, 1.0f);
+        
         interfaceJoueur.Draw(window); // Dessine le HUD
         
         window.display();

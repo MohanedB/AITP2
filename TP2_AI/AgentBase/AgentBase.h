@@ -3,6 +3,7 @@
 
 #include "../FSM/StateMachine.h"
 #include "../Map/Grid.h"
+#include "../AI/Pathfinder.h"
 
 struct RayHit
 {
@@ -44,4 +45,14 @@ private:
     float FOV = 60.0f;
     int rayCount = 60;
     int currentPatrolPoint = 0;
+
+    //Mouvement dans Update
+    sf::Vector2f target;
+    sf::Vector2f movement;
+    sf::Vector2f nextPosX;
+    sf::Vector2f nextPosY;
+
+    //Pathfinding
+    std::vector<sf::Vector2f> currentPath;
+    int pathIndex = 0;
 };
