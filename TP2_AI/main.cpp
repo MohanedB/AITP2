@@ -23,13 +23,13 @@ int main() {
     Intrus joueur({ 30.0f, 30.0f });
     
     AgentBase ennemi1({770.0f, 570.0f});
-    ennemi1.SetPatrolPoints();
+    ennemi1.SetPatrolPoints(gameWorld);
     
     AgentBase ennemi2({370.0f, 270.0f});
-    ennemi2.SetPatrolPoints();
+    ennemi2.SetPatrolPoints(gameWorld);
     
     AgentBase ennemi3({150.0f, 255.0f});
-    ennemi3.SetPatrolPoints();
+    ennemi3.SetPatrolPoints(gameWorld);
     
     HUD interfaceJoueur;
     

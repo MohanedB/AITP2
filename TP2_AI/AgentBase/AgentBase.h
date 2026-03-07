@@ -30,7 +30,7 @@ public:
     RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);
     void RayCast(sf::RenderWindow& window, Grid& map, float mapScale);
 
-    void SetPatrolPoints();
+    void SetPatrolPoints(Grid& grid);
     
 private:
     sf::CircleShape shape;
