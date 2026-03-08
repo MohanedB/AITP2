@@ -1,5 +1,4 @@
 ﻿#include "Pathfinder.h"
-#include <cmath>
 #include <algorithm>
 
 std::vector<sf::Vector2f> Pathfinder::FindPath(Grid& grid, sf::Vector2f startPos, sf::Vector2f targetPos) {

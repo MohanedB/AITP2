@@ -18,17 +18,17 @@ public:
     AgentBase(sf::Vector2f startPos);
     
     void Update(float deltaTime, Grid& grid);
-    void Draw(sf::RenderWindow& window);
+    void Draw(sf::RenderWindow& window) const;
 
     void SetPlayerPosition(sf::Vector2f position);
-    sf::Vector2f GetPlayerPosition();
+    sf::Vector2f GetPlayerPosition() const;
 
-    sf::Vector2f GetPosition();
+    sf::Vector2f GetPosition() const;
     
     StateMachine& GetEnnemyState();
 
-    RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);
-    void RayCast(sf::RenderWindow& window, Grid& map, float mapScale);
+    static RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);
+    void RayCast(sf::RenderWindow& window, Grid& map, float mapScale) const;
 
     void SetPatrolPoints(Grid& grid);
     

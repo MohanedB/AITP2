@@ -6,12 +6,7 @@
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
 
-// On inclut les vrais fichiers de ton pote
-#include <cmath>
-
 #include "AgentBase/AgentBase.h"
-#include "FSM/StateMachine.h"
-// #include "AgentBase/AgentBase.h" // Décommente ça s'il faut aussi déclarer son agent ici
 
 int main() {
     // Fenêtre 1000x600 : 800 pour la map + 200 pour la barre latérale (HUD)
@@ -34,7 +29,7 @@ int main() {
     HUD interfaceJoueur;
     
     sf::Clock clock;
-    bool showDebugPath = true; // Pour activer/desactiver le test du A*
+    bool showDebugPath = true;
 
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
@@ -100,7 +95,7 @@ int main() {
 
         joueur.Draw(window); // Dessine l'intrus WASD
         
-        ennemi1.Draw(window); //Dessine l'ennemi
+        ennemi1.Draw(window); //Dessine les ennemis
         ennemi1.RayCast(window, gameWorld, 1.0f);
         
         ennemi2.Draw(window);

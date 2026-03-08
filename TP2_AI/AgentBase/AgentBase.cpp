@@ -1,6 +1,5 @@
 ﻿#include "AgentBase.h"
 #include <cmath>
-#include <iostream>
 
 AgentBase::AgentBase(sf::Vector2f startPos)
 {
@@ -14,7 +13,7 @@ AgentBase::AgentBase(sf::Vector2f startPos)
     speed = 50.0f;
 }
 
-void AgentBase::Draw(sf::RenderWindow& window)
+void AgentBase::Draw(sf::RenderWindow& window) const
 {
     window.draw(shape);
 }
@@ -24,14 +23,19 @@ void AgentBase::SetPlayerPosition(sf::Vector2f position)
     playerPosition = position;
 }
 
-sf::Vector2f AgentBase::GetPlayerPosition()
+sf::Vector2f AgentBase::GetPlayerPosition() const
 {
     return playerPosition;
 }
 
-sf::Vector2f AgentBase::GetPosition()
+sf::Vector2f AgentBase::GetPosition() const
 {
     return position;
+}
+
+StateMachine& AgentBase::GetEnnemyState()
+{
+    return ennemyState;
 }
 
 void AgentBase::Update(float deltaTime, Grid& grid)
@@ -40,21 +44,28 @@ void AgentBase::Update(float deltaTime, Grid& grid)
     {
         target = patrolPoints[currentPatrolPoint];
         
+        float tileSize = grid.getTileSize();
+        Node* targetNode = grid.getNode(target.x / tileSize, target.y / tileSize);
+
+        if (!targetNode || targetNode->isObstacle)
+        {
+            currentPatrolPoint = (currentPatrolPoint + 1) % 11;
+            target = patrolPoints[currentPatrolPoint];
+        }
+        
         if (currentPath.empty())
         {
             currentPath = Pathfinder::FindPath(grid, position, target);
             pathIndex = 0;
-            
-            movement = target - position;
-            float length = std::sqrt(movement.x * movement.x + movement.y * movement.y);
-            if (length != 0) movement /= length;
         }
-        else
+        
+        if (!currentPath.empty())
         {
             sf::Vector2f waypoint = currentPath[pathIndex];
             movement = waypoint - position;
 
             float dist = std::sqrt(movement.x * movement.x + movement.y * movement.y);
+            
             if (dist < 10.0f)
             {
                 pathIndex++;
@@ -70,18 +81,28 @@ void AgentBase::Update(float deltaTime, Grid& grid)
 
                 return;
             }
+
             movement /= dist;
+        }
+        else
+        {
+            movement = target - position;
+            float length = std::sqrt(movement.x * movement.x + movement.y * movement.y);
+            if (length != 0) movement /= length;
         }
 
         nextPosX = position + sf::Vector2f(movement.x * speed * deltaTime, 0);
         nextPosY = position + sf::Vector2f(0, movement.y * speed * deltaTime);
     }
+    
     else if (GetEnnemyState().GetCurrentState() == "État FSM: Poursuite")
     {
         
     }
+    
     else if (GetEnnemyState().GetCurrentState() == "État FSM: Retour")
     {
+        
     }
 
     else
@@ -144,11 +165,6 @@ void AgentBase::Update(float deltaTime, Grid& grid)
     facingAngle = std::atan2(movement.y, movement.x) * 180.f / 3.14159265f;
 }
 
-StateMachine& AgentBase::GetEnnemyState()
-{
-    return ennemyState;
-}
-
 RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist)
 {
     float tileSize = grid.getTileSize();
@@ -180,7 +196,7 @@ RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, flo
     return { false, pos, maxDist };
 }
 
-void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale)
+void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale) const
 {
     float angleStart = facingAngle - FOV / 2.0f;
 
@@ -215,15 +231,25 @@ void AgentBase::SetPatrolPoints(Grid& grid)
         sf::Vector2f candidate;
 
         if (patrolPoints[i - 1].x < 725.0f && patrolPoints[i - 1].y < 530.0f)
-            candidate = { patrolPoints[i - 1].x + 45.0f, patrolPoints[i - 1].y + 25.0f };
+        {
+            candidate = {
+                patrolPoints[i - 1].x + 45.0f,
+                patrolPoints[i - 1].y + 25.0f
+            };
+        }
         else
-            candidate = { patrolPoints[i - 1].x - 325.0f, patrolPoints[i - 1].y - 270.0f };
+        {
+            candidate = {
+                patrolPoints[i - 1].x - 325.0f,
+                patrolPoints[i - 1].y - 270.0f
+            };
+        }
 
         int gx = candidate.x / tileSize;
         int gy = candidate.y / tileSize;
 
         Node* node = grid.getNode(gx, gy);
-
+        
         if (node && !node->isObstacle)
             patrolPoints[i] = candidate;
         else
