@@ -58,11 +58,12 @@ private:
     float           speed;
     float           radius;
 
-    static constexpr int   PATROL_COUNT    = 11;
-    static constexpr float CAPTURE_DIST    = 14.0f; // distance de capture
-    static constexpr float ARRIVE_RADIUS   = 60.0f; // commence a ralentir a cette distance
-    static constexpr float WANDER_DIST     = 80.0f; // rayon du cercle de wander
-    static constexpr float WANDER_JITTER   = 40.0f; // variation max par frame
+    static constexpr int PATROL_COUNT = 11;
+
+    float captureDistance; // distance de capture
+    float arriveRadius;    // commence a ralentir a cette distance
+    float wanderDist;      // rayon du cercle de wander
+    float wanderJitter;    // variation max par frame
 
     sf::Vector2f patrolPoints[PATROL_COUNT];
     int          currentPatrolPoint = 0;
@@ -73,10 +74,6 @@ private:
 
     // Wander state
     float wanderAngle = 0.0f;
-
-    // Velocite courante (smoothee par lerp)
-    sf::Vector2f currentVelocity = { 0.f, 0.f };
-    static constexpr float STEERING_SMOOTH = 8.0f;
 
     StateMachine ennemyState;
     bool         playerVisible = false;

@@ -8,14 +8,15 @@ static constexpr float PI = 3.14159265f;
 
 // ------------------------------------------------------------------ ctor
 AgentBase::AgentBase(sf::Vector2f startPos)
-    : position(startPos), speed(80.0f), radius(8.0f)
+    : position(startPos), speed(80.0f), radius(8.0f),
+      captureDistance(14.0f), arriveRadius(60.0f),
+      wanderDist(80.0f), wanderJitter(40.0f)
 {
     shape.setRadius(radius);
     shape.setFillColor(sf::Color::Red);
     shape.setOrigin({ radius, radius });
     shape.setPosition(position);
 
-    // angle de wander aleatoire au depart
     wanderAngle = static_cast<float>(std::rand() % 360);
 }
 
@@ -28,13 +29,11 @@ StateMachine& AgentBase::GetEnnemyState()            { return ennemyState; }
 
 bool AgentBase::HasCapturedPlayer() const
 {
-    return VecDist(position, playerPosition) < CAPTURE_DIST;
+    return VecDist(position, playerPosition) < captureDistance;
 }
 
 // ================================================================== STEERING BEHAVIORS
 
-// --- Seek ---
-// Va vers la cible a vitesse maximale
 sf::Vector2f AgentBase::Seek(sf::Vector2f target)
 {
     sf::Vector2f toTarget = target - position;
@@ -43,8 +42,6 @@ sf::Vector2f AgentBase::Seek(sf::Vector2f target)
     return (toTarget / len) * speed;
 }
 
-// --- Arrive ---
-// Comme Seek mais ralentit dans un rayon autour de la cible
 sf::Vector2f AgentBase::Arrive(sf::Vector2f target, float slowRadius)
 {
     sf::Vector2f toTarget = target - position;
@@ -53,45 +50,33 @@ sf::Vector2f AgentBase::Arrive(sf::Vector2f target, float slowRadius)
 
     float desiredSpeed = speed;
     if (dist < slowRadius)
-        desiredSpeed = speed * (dist / slowRadius); // ralentissement lineaire
+        desiredSpeed = speed * (dist / slowRadius);
 
     return (toTarget / dist) * desiredSpeed;
 }
 
-// --- Wander ---
-// Mouvement aleatoire fluide : projette un cercle devant l'agent et perturbe un point dessus
 sf::Vector2f AgentBase::Wander(float deltaTime)
 {
-    // Jitter : deplacement aleatoire de l'angle de wander
-    float jitter = WANDER_JITTER * deltaTime;
+    float jitter = wanderJitter * deltaTime;
     wanderAngle += (static_cast<float>(std::rand()) / RAND_MAX * 2.0f - 1.0f) * jitter;
 
-    // Centre du cercle de wander : devant l'agent
     sf::Vector2f facing(std::cos(facingAngle * PI / 180.f),
                         std::sin(facingAngle * PI / 180.f));
-    sf::Vector2f circleCenter = position + facing * WANDER_DIST;
+    sf::Vector2f circleCenter = position + facing * wanderDist;
 
-    // Point sur le cercle de wander
     sf::Vector2f wanderPoint(circleCenter.x + std::cos(wanderAngle) * 30.0f,
                              circleCenter.y + std::sin(wanderAngle) * 30.0f);
 
-    // Seek vers ce point
     return Seek(wanderPoint);
 }
 
 // ================================================================== APPLY VELOCITY
-void AgentBase::ApplyVelocity(sf::Vector2f desiredVelocity, float deltaTime, Grid& grid)
+void AgentBase::ApplyVelocity(sf::Vector2f velocity, float deltaTime, Grid& grid)
 {
-    // Lerp vers la velocite desiree → mouvement smooth
-    float t = 1.0f - std::exp(-STEERING_SMOOTH * deltaTime);
-    currentVelocity.x += (desiredVelocity.x - currentVelocity.x) * t;
-    currentVelocity.y += (desiredVelocity.y - currentVelocity.y) * t;
+    float len = VecLength(velocity);
+    if (len < 0.001f) return;
 
-    float len = VecLength(currentVelocity);
-    if (len < 0.5f) return;
-
-    // Mettre a jour l'angle de regard
-    facingAngle = std::atan2(currentVelocity.y, currentVelocity.x) * 180.f / PI;
+    facingAngle = std::atan2(velocity.y, velocity.x) * 180.f / PI;
 
     auto isWall = [&](float px, float py) -> bool {
         int gx = static_cast<int>(px / grid.getTileSize());
@@ -101,8 +86,8 @@ void AgentBase::ApplyVelocity(sf::Vector2f desiredVelocity, float deltaTime, Gri
     };
 
     float r  = radius - 1.0f;
-    float dx = currentVelocity.x * deltaTime;
-    float dy = currentVelocity.y * deltaTime;
+    float dx = velocity.x * deltaTime;
+    float dy = velocity.y * deltaTime;
 
     sf::Vector2f nextX = position; nextX.x += dx;
     if (!isWall(nextX.x - r, position.y - r) &&
@@ -128,28 +113,30 @@ void AgentBase::RequestPath(Grid& grid, sf::Vector2f target)
     pathIndex = 0;
 }
 
-// Suit le chemin A* waypoint par waypoint
-// useArrive = true -> Arrive au dernier waypoint (ralentissement)
+sf::Vector2f AgentBase::GetLookaheadTarget() const
+{
+    if (path.empty() || pathIndex >= (int)path.size())
+        return position;
+    int lookahead = std::min(pathIndex + 4, (int)path.size() - 1);
+    return path[lookahead];
+}
+
 void AgentBase::FollowPath(float deltaTime, Grid& grid, bool useArrive)
 {
+    // Avancer pathIndex tant qu'on est proche du waypoint courant
+    while (pathIndex < (int)path.size() &&
+           VecDist(position, path[pathIndex]) < 6.0f)
+        pathIndex++;
+
     if (path.empty() || pathIndex >= (int)path.size())
         return;
 
     sf::Vector2f waypoint = path[pathIndex];
+    bool isLastWaypoint   = (pathIndex == (int)path.size() - 1);
 
-    if (VecDist(position, waypoint) < 6.0f)
-    {
-        pathIndex++;
-        return;
-    }
-
-    bool isLastWaypoint = (pathIndex == (int)path.size() - 1);
-    sf::Vector2f velocity;
-
-    if (useArrive && isLastWaypoint)
-        velocity = Arrive(waypoint, ARRIVE_RADIUS);
-    else
-        velocity = Seek(waypoint);
+    sf::Vector2f velocity = (useArrive && isLastWaypoint)
+                            ? Arrive(waypoint, arriveRadius)
+                            : Seek(waypoint);
 
     ApplyVelocity(velocity, deltaTime, grid);
 }
@@ -162,8 +149,6 @@ void AgentBase::Update(float deltaTime, Grid& grid)
 
     States current = ennemyState.GetState();
 
-    // Patrouille : detection initiale avec FOV
-    // Poursuite/Retour : LOS seul (on connait deja le joueur)
     bool usesFOV  = (current == States::Patrouille);
     playerVisible = CanSeePlayer(grid, usesFOV);
     bool playerLost = !playerVisible;
@@ -216,32 +201,18 @@ void AgentBase::Update(float deltaTime, Grid& grid)
         {
             if (path.empty() || pathIndex >= (int)path.size())
             {
-                // Wander en attendant le prochain path
-                sf::Vector2f vel = Wander(deltaTime);
-                ApplyVelocity(vel, deltaTime, grid);
+                currentPatrolPoint = (currentPatrolPoint + 1) % PATROL_COUNT;
                 RequestPath(grid, patrolPoints[currentPatrolPoint]);
             }
-            else
-            {
-                // Arrive au point de patrol (ralentit en approchant)
-                FollowPath(deltaTime, grid, true);
-
-                if (path.empty() || pathIndex >= (int)path.size())
-                {
-                    currentPatrolPoint = (currentPatrolPoint + 1) % PATROL_COUNT;
-                    RequestPath(grid, patrolPoints[currentPatrolPoint]);
-                }
-            }
+            FollowPath(deltaTime, grid, false); 
             break;
         }
 
         case States::Poursuite:
-            // Seek vers le joueur via A* (vitesse max, pas de ralentissement)
             FollowPath(deltaTime, grid, false);
             break;
 
         case States::Retour:
-            // Arrive au point de patrol (ralentit en arrivant)
             FollowPath(deltaTime, grid, true);
             break;
     }
