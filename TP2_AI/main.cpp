@@ -6,9 +6,7 @@
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
 #include "UI/EndScreen.h"
-#include <cmath>
 #include "AgentBase/AgentBase.h"
-#include "FSM/StateMachine.h"
 #include "Goal/Goal.h"
 
 static void ResetGame(Intrus& joueur, std::vector<AgentBase>& ennemis, bool& gameOver)
@@ -28,7 +26,7 @@ int main() {
 
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur({ 30.0f, 30.0f });
-    Goal objectif({ 400.0f, 30.0f });
+    Goal objectif({ 750.0f, 550.0f });
     HUD interfaceJoueur;
     EndScreen ecranFin(window.getSize());
 
@@ -66,8 +64,7 @@ int main() {
             if (gameOver && ecranFin.HandleEvent(*event, window))
                 ResetGame(joueur, ennemis, gameOver);
         }
-
-        // --- UPDATE ---
+        
         if (!gameOver) {
             joueur.Update(deltaTime, gameWorld);
 
@@ -88,13 +85,11 @@ int main() {
             // HUD affiche l'etat FSM du premier ennemi
             interfaceJoueur.Update(deltaTime, ennemis[0].GetEnnemyState());
         }
-
-        // --- PATHFINDING DEBUG (premier ennemi) ---
+        
         std::vector<sf::Vector2f> currentPath;
         if (showDebugPath && !gameOver)
             currentPath = Pathfinder::FindPath(gameWorld, ennemis[0].GetPosition(), joueur.GetPosition());
-
-        // --- RENDER ---
+        
         window.clear(sf::Color::Black);
         gameWorld.Draw(window);
 

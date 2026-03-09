@@ -34,10 +34,9 @@ public:
     void SetPatrolPoints();
 
 private:
-    // --- Steering behaviors ---
-    // Retournent une velocite desirée (normalisee * speed)
-    sf::Vector2f Seek(sf::Vector2f target);
-    sf::Vector2f Arrive(sf::Vector2f target, float slowRadius = 60.0f);
+    // Retournent une velocite desirée (normalisée * speed)
+    sf::Vector2f Seek(sf::Vector2f target) const;
+    sf::Vector2f Arrive(sf::Vector2f target, float slowRadius = 60.0f) const;
     sf::Vector2f Wander(float deltaTime);
 
     // Applique la velocite avec collision
