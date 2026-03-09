@@ -1,258 +1,337 @@
 ﻿#include "AgentBase.h"
 #include <cmath>
+#include <cstdlib>
 
+static float VecLength(sf::Vector2f v) { return std::sqrt(v.x * v.x + v.y * v.y); }
+static float VecDist(sf::Vector2f a, sf::Vector2f b) { return VecLength(b - a); }
+static constexpr float PI = 3.14159265f;
+
+// ------------------------------------------------------------------ ctor
 AgentBase::AgentBase(sf::Vector2f startPos)
+    : position(startPos), speed(80.0f), radius(8.0f)
 {
-    radius = 8.0f;
     shape.setRadius(radius);
-    shape.setFillColor(sf::Color::Red); // Les ennemis en rouge
+    shape.setFillColor(sf::Color::Red);
     shape.setOrigin({ radius, radius });
-    position = startPos;
     shape.setPosition(position);
 
-    speed = 50.0f;
+    // angle de wander aleatoire au depart
+    wanderAngle = static_cast<float>(std::rand() % 360);
 }
 
-void AgentBase::Draw(sf::RenderWindow& window) const
+// ------------------------------------------------------------------ public getters
+void AgentBase::Draw(sf::RenderWindow& window)       { window.draw(shape); }
+void AgentBase::SetPlayerPosition(sf::Vector2f pos)  { playerPosition = pos; }
+sf::Vector2f AgentBase::GetPlayerPosition() const    { return playerPosition; }
+sf::Vector2f AgentBase::GetPosition()       const    { return position; }
+StateMachine& AgentBase::GetEnnemyState()            { return ennemyState; }
+
+bool AgentBase::HasCapturedPlayer() const
 {
-    window.draw(shape);
+    return VecDist(position, playerPosition) < CAPTURE_DIST;
 }
 
-void AgentBase::SetPlayerPosition(sf::Vector2f position)
+// ================================================================== STEERING BEHAVIORS
+
+// --- Seek ---
+// Va vers la cible a vitesse maximale
+sf::Vector2f AgentBase::Seek(sf::Vector2f target)
 {
-    playerPosition = position;
+    sf::Vector2f toTarget = target - position;
+    float len = VecLength(toTarget);
+    if (len < 0.001f) return { 0, 0 };
+    return (toTarget / len) * speed;
 }
 
-sf::Vector2f AgentBase::GetPlayerPosition() const
+// --- Arrive ---
+// Comme Seek mais ralentit dans un rayon autour de la cible
+sf::Vector2f AgentBase::Arrive(sf::Vector2f target, float slowRadius)
 {
-    return playerPosition;
+    sf::Vector2f toTarget = target - position;
+    float dist = VecLength(toTarget);
+    if (dist < 0.001f) return { 0, 0 };
+
+    float desiredSpeed = speed;
+    if (dist < slowRadius)
+        desiredSpeed = speed * (dist / slowRadius); // ralentissement lineaire
+
+    return (toTarget / dist) * desiredSpeed;
 }
 
-sf::Vector2f AgentBase::GetPosition() const
+// --- Wander ---
+// Mouvement aleatoire fluide : projette un cercle devant l'agent et perturbe un point dessus
+sf::Vector2f AgentBase::Wander(float deltaTime)
 {
-    return position;
+    // Jitter : deplacement aleatoire de l'angle de wander
+    float jitter = WANDER_JITTER * deltaTime;
+    wanderAngle += (static_cast<float>(std::rand()) / RAND_MAX * 2.0f - 1.0f) * jitter;
+
+    // Centre du cercle de wander : devant l'agent
+    sf::Vector2f facing(std::cos(facingAngle * PI / 180.f),
+                        std::sin(facingAngle * PI / 180.f));
+    sf::Vector2f circleCenter = position + facing * WANDER_DIST;
+
+    // Point sur le cercle de wander
+    sf::Vector2f wanderPoint(circleCenter.x + std::cos(wanderAngle) * 30.0f,
+                             circleCenter.y + std::sin(wanderAngle) * 30.0f);
+
+    // Seek vers ce point
+    return Seek(wanderPoint);
 }
 
-StateMachine& AgentBase::GetEnnemyStateMachine()
+// ================================================================== APPLY VELOCITY
+void AgentBase::ApplyVelocity(sf::Vector2f desiredVelocity, float deltaTime, Grid& grid)
 {
-    return ennemyState;
-}
+    // Lerp vers la velocite desiree → mouvement smooth
+    float t = 1.0f - std::exp(-STEERING_SMOOTH * deltaTime);
+    currentVelocity.x += (desiredVelocity.x - currentVelocity.x) * t;
+    currentVelocity.y += (desiredVelocity.y - currentVelocity.y) * t;
 
-void AgentBase::Update(float deltaTime, Grid& grid)
-{
-    if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Patrouille")
-    {
-        target = patrolPoints[currentPatrolPoint];
-        
-        float tileSize = grid.getTileSize();
-        Node* targetNode = grid.getNode(target.x / tileSize, target.y / tileSize);
+    float len = VecLength(currentVelocity);
+    if (len < 0.5f) return;
 
-        if (!targetNode || targetNode->isObstacle)
-        {
-            currentPatrolPoint = (currentPatrolPoint + 1) % 11;
-            target = patrolPoints[currentPatrolPoint];
-        }
-        
-        if (currentPath.empty())
-        {
-            currentPath = Pathfinder::FindPath(grid, position, target);
-            pathIndex = 0;
-        }
-        
-        if (!currentPath.empty())
-        {
-            sf::Vector2f waypoint = currentPath[pathIndex];
-            movement = waypoint - position;
+    // Mettre a jour l'angle de regard
+    facingAngle = std::atan2(currentVelocity.y, currentVelocity.x) * 180.f / PI;
 
-            float dist = std::sqrt(movement.x * movement.x + movement.y * movement.y);
-            
-            if (dist < 10.0f)
-            {
-                pathIndex++;
-                
-                if (pathIndex >= currentPath.size())
-                {
-                    currentPatrolPoint = (currentPatrolPoint + 1) % 11;
-                    target = patrolPoints[currentPatrolPoint];
-
-                    currentPath = Pathfinder::FindPath(grid, position, target);
-                    pathIndex = 0;
-                }
-
-                return;
-            }
-
-            movement /= dist;
-        }
-        else
-        {
-            movement = target - position;
-            float length = std::sqrt(movement.x * movement.x + movement.y * movement.y);
-            if (length != 0) movement /= length;
-        }
-
-        nextPosX = position + sf::Vector2f(movement.x * speed * deltaTime, 0);
-        nextPosY = position + sf::Vector2f(0, movement.y * speed * deltaTime);
-    }
-    
-    else if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Poursuite")
-    {
-        
-    }
-    
-    else if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Retour")
-    {
-        
-    }
-
-    else
-    {
-        printf("Erreur d'état\n");
-    }
-    
-    auto isWall = [&](float px, float py) {
-        float tileSize = grid.getTileSize();
-        int gridX = static_cast<int>(px / tileSize);
-        int gridY = static_cast<int>(py / tileSize);
-        Node* node = grid.getNode(gridX, gridY);
+    auto isWall = [&](float px, float py) -> bool {
+        int gx = static_cast<int>(px / grid.getTileSize());
+        int gy = static_cast<int>(py / grid.getTileSize());
+        Node* node = grid.getNode(gx, gy);
         return (node == nullptr || node->isObstacle);
     };
 
-    bool collided = false;
+    float r  = radius - 1.0f;
+    float dx = currentVelocity.x * deltaTime;
+    float dy = currentVelocity.y * deltaTime;
 
-    // Collision X
-    if (!isWall(nextPosX.x - radius, position.y - radius + 1) &&
-        !isWall(nextPosX.x + radius, position.y - radius + 1) &&
-        !isWall(nextPosX.x - radius, position.y + radius - 1) &&
-        !isWall(nextPosX.x + radius, position.y + radius - 1))
-    {
-        position.x = nextPosX.x;
-    }
-    else
-    {
-        collided = true;
-    }
+    sf::Vector2f nextX = position; nextX.x += dx;
+    if (!isWall(nextX.x - r, position.y - r) &&
+        !isWall(nextX.x + r, position.y - r) &&
+        !isWall(nextX.x - r, position.y + r) &&
+        !isWall(nextX.x + r, position.y + r))
+        position.x = nextX.x;
 
-    // Collision Y
-    if (!isWall(position.x - radius + 1, nextPosY.y - radius) &&
-        !isWall(position.x + radius - 1, nextPosY.y - radius) &&
-        !isWall(position.x - radius + 1, nextPosY.y + radius) &&
-        !isWall(position.x + radius - 1, nextPosY.y + radius))
-    {
-        position.y = nextPosY.y;
-    }
-    else
-    {
-        collided = true;
-    }
-    
-    if (collided)
-    {
-        position -= movement * speed * deltaTime * 2.0f;
-        
-        sf::Vector2f right(movement.y, -movement.x);
-        float rlen = std::sqrt(right.x * right.x + right.y * right.y);
-        if (rlen != 0) right /= rlen;
+    sf::Vector2f nextY = position; nextY.y += dy;
+    if (!isWall(position.x - r, nextY.y - r) &&
+        !isWall(position.x + r, nextY.y - r) &&
+        !isWall(position.x - r, nextY.y + r) &&
+        !isWall(position.x + r, nextY.y + r))
+        position.y = nextY.y;
 
-        position += right * speed * deltaTime * 1.5f;
-
-        shape.setPosition(position);
-        facingAngle = std::atan2(movement.y, movement.x) * 180.f / 3.14159265f;
-        return;
-    }
-    
     shape.setPosition(position);
-    facingAngle = std::atan2(movement.y, movement.x) * 180.f / 3.14159265f;
 }
 
+// ================================================================== PATH NAVIGATION
+void AgentBase::RequestPath(Grid& grid, sf::Vector2f target)
+{
+    path      = Pathfinder::FindPath(grid, position, target);
+    pathIndex = 0;
+}
+
+// Suit le chemin A* waypoint par waypoint
+// useArrive = true -> Arrive au dernier waypoint (ralentissement)
+void AgentBase::FollowPath(float deltaTime, Grid& grid, bool useArrive)
+{
+    if (path.empty() || pathIndex >= (int)path.size())
+        return;
+
+    sf::Vector2f waypoint = path[pathIndex];
+
+    if (VecDist(position, waypoint) < 6.0f)
+    {
+        pathIndex++;
+        return;
+    }
+
+    bool isLastWaypoint = (pathIndex == (int)path.size() - 1);
+    sf::Vector2f velocity;
+
+    if (useArrive && isLastWaypoint)
+        velocity = Arrive(waypoint, ARRIVE_RADIUS);
+    else
+        velocity = Seek(waypoint);
+
+    ApplyVelocity(velocity, deltaTime, grid);
+}
+
+// ================================================================== UPDATE (FSM)
+void AgentBase::Update(float deltaTime, Grid& grid)
+{
+    if (pathCooldown > 0.0f)
+        pathCooldown -= deltaTime;
+
+    States current = ennemyState.GetState();
+
+    // Patrouille : detection initiale avec FOV
+    // Poursuite/Retour : LOS seul (on connait deja le joueur)
+    bool usesFOV  = (current == States::Patrouille);
+    playerVisible = CanSeePlayer(grid, usesFOV);
+    bool playerLost = !playerVisible;
+
+    // --- Transitions FSM ---
+    switch (current)
+    {
+        case States::Patrouille:
+            if (playerVisible)
+            {
+                ennemyState.SetState(States::Poursuite);
+                RequestPath(grid, playerPosition);
+                pathCooldown = 0.5f;
+            }
+            break;
+
+        case States::Poursuite:
+            if (playerLost)
+            {
+                ennemyState.SetState(States::Retour);
+                RequestPath(grid, patrolPoints[currentPatrolPoint]);
+            }
+            else if (pathCooldown <= 0.0f)
+            {
+                RequestPath(grid, playerPosition);
+                pathCooldown = 0.5f;
+            }
+            break;
+
+        case States::Retour:
+            if (!playerLost)
+            {
+                ennemyState.SetState(States::Poursuite);
+                RequestPath(grid, playerPosition);
+                pathCooldown = 0.5f;
+            }
+            else if (path.empty() || pathIndex >= (int)path.size())
+            {
+                ennemyState.SetState(States::Patrouille);
+                currentPatrolPoint = (currentPatrolPoint + 1) % PATROL_COUNT;
+                RequestPath(grid, patrolPoints[currentPatrolPoint]);
+            }
+            break;
+    }
+
+    // --- Comportements (steering) ---
+    switch (ennemyState.GetState())
+    {
+        case States::Patrouille:
+        {
+            if (path.empty() || pathIndex >= (int)path.size())
+            {
+                // Wander en attendant le prochain path
+                sf::Vector2f vel = Wander(deltaTime);
+                ApplyVelocity(vel, deltaTime, grid);
+                RequestPath(grid, patrolPoints[currentPatrolPoint]);
+            }
+            else
+            {
+                // Arrive au point de patrol (ralentit en approchant)
+                FollowPath(deltaTime, grid, true);
+
+                if (path.empty() || pathIndex >= (int)path.size())
+                {
+                    currentPatrolPoint = (currentPatrolPoint + 1) % PATROL_COUNT;
+                    RequestPath(grid, patrolPoints[currentPatrolPoint]);
+                }
+            }
+            break;
+        }
+
+        case States::Poursuite:
+            // Seek vers le joueur via A* (vitesse max, pas de ralentissement)
+            FollowPath(deltaTime, grid, false);
+            break;
+
+        case States::Retour:
+            // Arrive au point de patrol (ralentit en arrivant)
+            FollowPath(deltaTime, grid, true);
+            break;
+    }
+}
+
+// ================================================================== DETECTION
+bool AgentBase::CanSeePlayer(Grid& grid, bool withFOV) const
+{
+    sf::Vector2f toPlayer = playerPosition - position;
+    float dist = VecLength(toPlayer);
+
+    if (dist < 0.001f || dist > 300.0f)
+        return false;
+
+    if (withFOV)
+    {
+        float angleToPlayer = std::atan2(toPlayer.y, toPlayer.x) * 180.f / PI;
+        float diff = angleToPlayer - facingAngle;
+        while (diff >  180.f) diff -= 360.f;
+        while (diff < -180.f) diff += 360.f;
+        if (std::abs(diff) > FOV / 2.0f)
+            return false;
+    }
+
+    sf::Vector2f dir = toPlayer / dist;
+    RayHit hit = const_cast<AgentBase*>(this)->CastRay(grid, position, dir, dist);
+    return !hit.hit;
+}
+
+// ================================================================== RAYCAST
 RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist)
 {
-    float tileSize = grid.getTileSize();
-
-    float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len == 0) return { false, origin, 0 };
+    float len = VecLength(dir);
+    if (len < 0.001f) return { false, origin, 0 };
     dir /= len;
 
     sf::Vector2f pos = origin;
-    float traveled = 0.0f;
-    float step = 2.0f;
+    float traveled   = 0.0f;
+    const float step = 2.0f;
 
     while (traveled < maxDist)
     {
-        pos += dir * step;
+        pos      += dir * step;
         traveled += step;
 
-        int gx = static_cast<int>(pos.x / tileSize);
-        int gy = static_cast<int>(pos.y / tileSize);
-
+        int gx = static_cast<int>(pos.x / grid.getTileSize());
+        int gy = static_cast<int>(pos.y / grid.getTileSize());
         Node* node = grid.getNode(gx, gy);
 
         if (node == nullptr || node->isObstacle)
-        {
             return { true, pos, traveled };
-        }
     }
 
     return { false, pos, maxDist };
 }
 
-void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale) const
+void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale)
 {
     float angleStart = facingAngle - FOV / 2.0f;
+    sf::Color rayColor = playerVisible ? sf::Color(255, 100, 0, 180)
+                                       : sf::Color(255, 255, 0, 120);
 
     for (int i = 0; i < rayCount; i++)
     {
-        float angle = angleStart + (FOV / rayCount) * i;
-
-        sf::Vector2f dir(std::cos(angle * 3.14159f / 180),
-                         std::sin(angle * 3.14159f / 180));
+        float angle = angleStart + (FOV / static_cast<float>(rayCount)) * i;
+        sf::Vector2f dir(std::cos(angle * PI / 180.f),
+                         std::sin(angle * PI / 180.f));
 
         RayHit hit = CastRay(grid, position, dir, 300.0f);
 
         sf::Vertex line[2];
         line[0].position = position * mapScale;
-        line[0].color = sf::Color::White;
-
+        line[0].color    = rayColor;
         line[1].position = hit.point * mapScale;
-        line[1].color = sf::Color::Transparent;
+        line[1].color    = rayColor;
 
         window.draw(line, 2, sf::PrimitiveType::Lines);
     }
 }
 
-void AgentBase::SetPatrolPoints(Grid& grid)
+// ================================================================== PATROL SETUP
+void AgentBase::SetPatrolPoints()
 {
-    float tileSize = grid.getTileSize();
-
     patrolPoints[0] = position;
-
-    for (int i = 1; i < 11; i++)
+    for (int i = 1; i < PATROL_COUNT; i++)
     {
-        sf::Vector2f candidate;
-
-        if (patrolPoints[i - 1].x < 725.0f && patrolPoints[i - 1].y < 530.0f)
-        {
-            candidate = {
-                patrolPoints[i - 1].x + 45.0f,
-                patrolPoints[i - 1].y + 25.0f
-            };
-        }
+        sf::Vector2f prev = patrolPoints[i - 1];
+        if (prev.x < 725.0f && prev.y < 545.0f)
+            patrolPoints[i] = { prev.x + 45.0f, prev.y + 25.0f };
         else
-        {
-            candidate = {
-                patrolPoints[i - 1].x - 325.0f,
-                patrolPoints[i - 1].y - 270.0f
-            };
-        }
-
-        int gx = candidate.x / tileSize;
-        int gy = candidate.y / tileSize;
-
-        Node* node = grid.getNode(gx, gy);
-        
-        if (node && !node->isObstacle)
-            patrolPoints[i] = candidate;
-        else
-            patrolPoints[i] = patrolPoints[i - 1];
+            patrolPoints[i] = { prev.x - 325.0f, prev.y - 270.0f };
     }
 }

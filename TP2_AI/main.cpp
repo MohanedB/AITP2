@@ -5,143 +5,120 @@
 #include "Map/Grid.h"
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
+#include "UI/EndScreen.h"
+#include <cmath>
 #include "AgentBase/AgentBase.h"
+#include "FSM/StateMachine.h"
 #include "Goal/Goal.h"
 
+static void ResetGame(Intrus& joueur, std::vector<AgentBase>& ennemis, bool& gameOver)
+{
+    joueur = Intrus({ 30.0f, 30.0f });
+    ennemis.clear();
+    ennemis.emplace_back(sf::Vector2f{ 770.0f, 570.0f });
+    ennemis.emplace_back(sf::Vector2f{ 400.0f, 300.0f });
+    ennemis.emplace_back(sf::Vector2f{ 100.0f, 500.0f });
+    for (auto& e : ennemis) e.SetPatrolPoints();
+    gameOver = false;
+}
+
 int main() {
-    // Fenêtre 1000x600 : 800 pour la map + 200 pour la barre latérale (HUD)
-    bool gameIsOver = false;
-    sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - Infrastructure Finale - Personne 1");
+    sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - TP2 Final");
     window.setFramerateLimit(60);
 
     Grid gameWorld(40, 30, 20.0f);
-    
     Intrus joueur({ 30.0f, 30.0f });
-    
-    AgentBase ennemi1({770.0f, 570.0f});
-    ennemi1.SetPatrolPoints(gameWorld);
-    
-    AgentBase ennemi2({370.0f, 270.0f});
-    ennemi2.SetPatrolPoints(gameWorld);
-    
-    AgentBase ennemi3({150.0f, 255.0f});
-    ennemi3.SetPatrolPoints(gameWorld);
-
-    AgentBase ennemis[3] = {ennemi1, ennemi2, ennemi3};
-    
+    Goal objectif({ 400.0f, 30.0f });
     HUD interfaceJoueur;
+    EndScreen ecranFin(window.getSize());
 
-    Goal goal({760.0f, 560.0f});
-    
+    std::vector<AgentBase> ennemis;
+    ennemis.emplace_back(sf::Vector2f{ 770.0f, 570.0f });
+    ennemis.emplace_back(sf::Vector2f{ 400.0f, 300.0f });
+    ennemis.emplace_back(sf::Vector2f{ 100.0f, 500.0f });
+    for (auto& e : ennemis) e.SetPatrolPoints();
+
     sf::Clock clock;
     bool showDebugPath = true;
+    bool gameOver      = false;
+
+    auto distSq = [](sf::Vector2f a, sf::Vector2f b) {
+        float dx = a.x - b.x, dy = a.y - b.y;
+        return dx * dx + dy * dy;
+    };
 
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
 
         while (const std::optional<sf::Event> event = window.pollEvent()) {
-            if (event->is<sf::Event::Closed>()) {
+            if (event->is<sf::Event::Closed>())
                 window.close();
-            }
+
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
-                if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                if (keyPressed->code == sf::Keyboard::Key::Escape)
                     window.close();
-                }
-                // Appuie sur 'T' pour toggle le chemin de test
-                if (keyPressed->code == sf::Keyboard::Key::T) {
+                if (keyPressed->code == sf::Keyboard::Key::T)
                     showDebugPath = !showDebugPath;
-                }
-                
-                //Appuie sur Q pour Trigger la fin du jeu, seulement pour testing
-                if (keyPressed->code == sf::Keyboard::Key::Q) {
-                    gameIsOver = true;
+                if (keyPressed->code == sf::Keyboard::Key::R && gameOver)
+                    ResetGame(joueur, ennemis, gameOver);
+            }
+
+            if (gameOver && ecranFin.HandleEvent(*event, window))
+                ResetGame(joueur, ennemis, gameOver);
+        }
+
+        // --- UPDATE ---
+        if (!gameOver) {
+            joueur.Update(deltaTime, gameWorld);
+
+            for (auto& e : ennemis) {
+                e.SetPlayerPosition(joueur.GetPosition());
+                e.Update(deltaTime, gameWorld);
+                if (e.HasCapturedPlayer()) {
+                    ecranFin.Show(EndResult::Captured);
+                    gameOver = true;
                 }
             }
+
+            if (distSq(joueur.GetPosition(), objectif.GetPosition()) < 30.0f * 30.0f) {
+                ecranFin.Show(EndResult::Escaped);
+                gameOver = true;
+            }
+
+            // HUD affiche l'etat FSM du premier ennemi
+            interfaceJoueur.Update(deltaTime, ennemis[0].GetEnnemyState());
         }
 
-        // --- 1. UPDATE ---
-        joueur.Update(deltaTime, gameWorld);
-        
-        ennemi1.SetPlayerPosition(joueur.GetPosition());
-        ennemi1.Update(deltaTime, gameWorld);
-        
-        ennemi2.SetPlayerPosition(joueur.GetPosition());
-        ennemi2.Update(deltaTime, gameWorld);
-
-        ennemi3.SetPlayerPosition(joueur.GetPosition());
-        ennemi3.Update(deltaTime, gameWorld);
-        
-        interfaceJoueur.Update(deltaTime, ennemi1.GetEnnemyStateMachine());
-
-        // --- 2. PATHFINDING TEST ---
+        // --- PATHFINDING DEBUG (premier ennemi) ---
         std::vector<sf::Vector2f> currentPath;
-        if (showDebugPath) {
-            // Puisque l'agent n'est pas encore branché, on garde la souris pour tester
-            sf::Vector2i mousePosi = sf::Mouse::getPosition(window);
-            sf::Vector2f mousePosf(static_cast<float>(mousePosi.x), static_cast<float>(mousePosi.y));
-            
-            // Calcul du A* du joueur vers la souris
-            //Path du joueur avec souris
-            //currentPath = Pathfinder::FindPath(gameWorld, joueur.GetPosition(), mousePosf);
+        if (showDebugPath && !gameOver)
+            currentPath = Pathfinder::FindPath(gameWorld, ennemis[0].GetPosition(), joueur.GetPosition());
 
-            //Path de l'ennemi au joueur
-            currentPath = Pathfinder::FindPath(gameWorld, ennemi1.GetPosition(), joueur.GetPosition());
-        }
-
-        // --- 3. RENDER ---
+        // --- RENDER ---
         window.clear(sf::Color::Black);
-        
-        gameWorld.Draw(window); // Dessine le labyrinthe
-        
-        // Dessin du chemin rouge 
+        gameWorld.Draw(window);
+
         if (showDebugPath && currentPath.size() > 1) {
             sf::VertexArray lines(sf::PrimitiveType::LineStrip, currentPath.size());
             for (size_t i = 0; i < currentPath.size(); ++i) {
                 lines[i].position = currentPath[i];
-                lines[i].color = sf::Color::Red;
+                lines[i].color    = sf::Color::Red;
             }
             window.draw(lines);
         }
 
-        goal.Draw(window); // Dessine le goal
-        
-        joueur.Draw(window); // Dessine l'intrus WASD
-        
-        ennemi1.Draw(window); //Dessine les ennemis
-        ennemi1.RayCast(window, gameWorld, 1.0f);
-        
-        ennemi2.Draw(window);
-        ennemi2.RayCast(window, gameWorld, 1.0f);
+        objectif.Draw(window);
+        joueur.Draw(window);
+        for (auto& e : ennemis) {
+            e.Draw(window);
+            e.RayCast(window, gameWorld, 1.0f);
+        }
+        interfaceJoueur.Draw(window);
 
-        ennemi3.Draw(window);
-        ennemi3.RayCast(window, gameWorld, 1.0f);
-        
-        interfaceJoueur.Draw(window); // Dessine le HUD
-        
+        if (gameOver)
+            ecranFin.Draw(window);
+
         window.display();
-
-        //TODO: Quand ennemis élminés, enlever de la liste
-        //Si liste d'ennemis vide, déclarer la fin du jeu
-        if constexpr (sizeof(ennemis) == 0)
-        {
-            gameIsOver = true;
-        }
-
-        //TODO: Regarder pour distance more or less de 5-10, et non distance exacte
-        //Si le joueur atteint le but, déclarer la fin du jeu
-        if (joueur.GetPosition() == goal.GetPosition())
-        {
-            gameIsOver = true;
-        }
-        
-        //Si le jeu est déclaré fini, fermer la page
-        if(gameIsOver)
-        {
-            window.close();
-        }
-        
     }
-    
     return 0;
-    
 }

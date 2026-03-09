@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <string>
 
-enum States
+enum class States
 {
     Patrouille,
     Poursuite,
@@ -11,10 +11,12 @@ enum States
 class StateMachine
 {
 public:
-    ~StateMachine();
-    std::string GetCurrentState();
-    
+    StateMachine();
+
+    void        SetState(States newState);
+    States      GetState() const;
+    std::string GetCurrentState() const; // meme interface pour le HUD
+
 private:
-States currentState;
-    
+    States currentState;
 };
