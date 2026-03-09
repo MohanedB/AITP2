@@ -5,11 +5,12 @@
 #include "Map/Grid.h"
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
-
 #include "AgentBase/AgentBase.h"
+#include "Goal/Goal.h"
 
 int main() {
     // Fenêtre 1000x600 : 800 pour la map + 200 pour la barre latérale (HUD)
+    bool gameIsOver = false;
     sf::RenderWindow window(sf::VideoMode({ 1000, 600 }), "PGJ1403 - Infrastructure Finale - Personne 1");
     window.setFramerateLimit(60);
 
@@ -25,8 +26,12 @@ int main() {
     
     AgentBase ennemi3({150.0f, 255.0f});
     ennemi3.SetPatrolPoints(gameWorld);
+
+    AgentBase ennemis[3] = {ennemi1, ennemi2, ennemi3};
     
     HUD interfaceJoueur;
+
+    Goal goal({760.0f, 560.0f});
     
     sf::Clock clock;
     bool showDebugPath = true;
@@ -46,6 +51,11 @@ int main() {
                 if (keyPressed->code == sf::Keyboard::Key::T) {
                     showDebugPath = !showDebugPath;
                 }
+                
+                //Appuie sur Q pour Trigger la fin du jeu, seulement pour testing
+                if (keyPressed->code == sf::Keyboard::Key::Q) {
+                    gameIsOver = true;
+                }
             }
         }
 
@@ -61,7 +71,7 @@ int main() {
         ennemi3.SetPlayerPosition(joueur.GetPosition());
         ennemi3.Update(deltaTime, gameWorld);
         
-        interfaceJoueur.Update(deltaTime, ennemi1.GetEnnemyState());
+        interfaceJoueur.Update(deltaTime, ennemi1.GetEnnemyStateMachine());
 
         // --- 2. PATHFINDING TEST ---
         std::vector<sf::Vector2f> currentPath;
@@ -93,6 +103,8 @@ int main() {
             window.draw(lines);
         }
 
+        goal.Draw(window); // Dessine le goal
+        
         joueur.Draw(window); // Dessine l'intrus WASD
         
         ennemi1.Draw(window); //Dessine les ennemis
@@ -107,6 +119,29 @@ int main() {
         interfaceJoueur.Draw(window); // Dessine le HUD
         
         window.display();
+
+        //TODO: Quand ennemis élminés, enlever de la liste
+        //Si liste d'ennemis vide, déclarer la fin du jeu
+        if constexpr (sizeof(ennemis) == 0)
+        {
+            gameIsOver = true;
+        }
+
+        //TODO: Regarder pour distance more or less de 5-10, et non distance exacte
+        //Si le joueur atteint le but, déclarer la fin du jeu
+        if (joueur.GetPosition() == goal.GetPosition())
+        {
+            gameIsOver = true;
+        }
+        
+        //Si le jeu est déclaré fini, fermer la page
+        if(gameIsOver)
+        {
+            window.close();
+        }
+        
     }
+    
     return 0;
+    
 }

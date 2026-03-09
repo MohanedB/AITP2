@@ -131,6 +131,7 @@
     <ClCompile Include="AgentBase\AgentBase.cpp" />
     <ClCompile Include="Character\Intrus.cpp" />
     <ClCompile Include="FSM\StateMachine.cpp" />
+    <ClCompile Include="Goal\Goal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map\Grid.cpp" />
     <ClCompile Include="UI\HUD.cpp" />
@@ -140,6 +141,7 @@
     <ClInclude Include="AgentBase\AgentBase.h" />
     <ClInclude Include="Character\Intrus.h" />
     <ClInclude Include="FSM\StateMachine.h" />
+    <ClInclude Include="Goal\Goal.h" />
     <ClInclude Include="Map\Grid.h" />
     <ClInclude Include="UI\HUD.h" />
   </ItemGroup>

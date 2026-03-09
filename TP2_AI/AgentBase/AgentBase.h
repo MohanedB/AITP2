@@ -15,6 +15,7 @@ struct RayHit
 class AgentBase
 {
 public:
+    AgentBase() { speed = 50.0f; radius = 8.0f; }
     AgentBase(sf::Vector2f startPos);
     
     void Update(float deltaTime, Grid& grid);
@@ -25,7 +26,7 @@ public:
 
     sf::Vector2f GetPosition() const;
     
-    StateMachine& GetEnnemyState();
+    StateMachine& GetEnnemyStateMachine();
 
     static RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);
     void RayCast(sf::RenderWindow& window, Grid& map, float mapScale) const;

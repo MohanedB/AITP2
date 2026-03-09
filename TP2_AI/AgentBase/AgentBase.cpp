@@ -5,7 +5,7 @@ AgentBase::AgentBase(sf::Vector2f startPos)
 {
     radius = 8.0f;
     shape.setRadius(radius);
-    shape.setFillColor(sf::Color::Red);
+    shape.setFillColor(sf::Color::Red); // Les ennemis en rouge
     shape.setOrigin({ radius, radius });
     position = startPos;
     shape.setPosition(position);
@@ -33,14 +33,14 @@ sf::Vector2f AgentBase::GetPosition() const
     return position;
 }
 
-StateMachine& AgentBase::GetEnnemyState()
+StateMachine& AgentBase::GetEnnemyStateMachine()
 {
     return ennemyState;
 }
 
 void AgentBase::Update(float deltaTime, Grid& grid)
 {
-    if (GetEnnemyState().GetCurrentState() == "État FSM: Patrouille")
+    if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Patrouille")
     {
         target = patrolPoints[currentPatrolPoint];
         
@@ -95,12 +95,12 @@ void AgentBase::Update(float deltaTime, Grid& grid)
         nextPosY = position + sf::Vector2f(0, movement.y * speed * deltaTime);
     }
     
-    else if (GetEnnemyState().GetCurrentState() == "État FSM: Poursuite")
+    else if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Poursuite")
     {
         
     }
     
-    else if (GetEnnemyState().GetCurrentState() == "État FSM: Retour")
+    else if (GetEnnemyStateMachine().GetCurrentState() == "État FSM: Retour")
     {
         
     }
