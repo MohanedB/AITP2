@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdlib>
 
-// ------------------------------------------------------------------ helpers
 float VecLength(sf::Vector2f v)
 {
     return std::sqrt(v.x * v.x + v.y * v.y);
@@ -13,7 +12,6 @@ float VecDist(sf::Vector2f a, sf::Vector2f b)
     return VecLength(b - a);
 }
 
-// ------------------------------------------------------------------ constructeur
 AgentBase::AgentBase(sf::Vector2f startPos)
 {
     position        = startPos;
@@ -38,7 +36,6 @@ AgentBase::AgentBase(sf::Vector2f startPos)
     shape.setPosition(position);
 }
 
-// ------------------------------------------------------------------ getters
 void AgentBase::Draw(sf::RenderWindow& window)
 {
     window.draw(shape);
@@ -69,7 +66,6 @@ bool AgentBase::HasCapturedPlayer()
     return VecDist(position, playerPosition) < captureDistance;
 }
 
-// ================================================================== STEERING BEHAVIORS
 
 // Seek : va vers la cible a vitesse max
 sf::Vector2f AgentBase::Seek(sf::Vector2f target)
@@ -123,7 +119,6 @@ sf::Vector2f AgentBase::Wander(float deltaTime)
     return Seek(wanderPoint);
 }
 
-// ================================================================== COLLISION
 bool AgentBase::IsWall(Grid& grid, float px, float py)
 {
     int gx = static_cast<int>(px / grid.getTileSize());
@@ -132,7 +127,6 @@ bool AgentBase::IsWall(Grid& grid, float px, float py)
     return (node == nullptr || node->isObstacle);
 }
 
-// ================================================================== APPLY VELOCITY
 void AgentBase::ApplyVelocity(sf::Vector2f velocity, float deltaTime, Grid& grid)
 {
     float len = VecLength(velocity);
@@ -171,7 +165,6 @@ void AgentBase::ApplyVelocity(sf::Vector2f velocity, float deltaTime, Grid& grid
     shape.setPosition(position);
 }
 
-// ================================================================== PATHFINDING
 void AgentBase::RequestPath(Grid& grid, sf::Vector2f target)
 {
     path = Pathfinder::FindPath(grid, position, target);
@@ -199,7 +192,6 @@ void AgentBase::FollowPath(float deltaTime, Grid& grid, bool useArrive)
     ApplyVelocity(velocity, deltaTime, grid);
 }
 
-// ================================================================== UPDATE (FSM)
 void AgentBase::Update(float deltaTime, Grid& grid)
 {
     if (pathCooldown > 0.0f)
@@ -210,8 +202,7 @@ void AgentBase::Update(float deltaTime, Grid& grid)
     // Detection : FOV en patrouille, LOS seul en poursuite/retour
     bool useFOV = (currentState == States::Patrouille);
     playerVisible = CanSeePlayer(grid, useFOV);
-
-    // ---- Transitions FSM ----
+    
     if (currentState == States::Patrouille)
     {
         if (playerVisible)
@@ -249,8 +240,7 @@ void AgentBase::Update(float deltaTime, Grid& grid)
             RequestPath(grid, patrolPoints[currentPatrolPoint]);
         }
     }
-
-    // ---- Comportements (steering) ----
+    
     States activeState = ennemyState.GetState();
 
     if (activeState == States::Patrouille)
@@ -272,7 +262,6 @@ void AgentBase::Update(float deltaTime, Grid& grid)
     }
 }
 
-// ================================================================== DETECTION
 bool AgentBase::CanSeePlayer(Grid& grid, bool checkFOV)
 {
     sf::Vector2f toPlayer = playerPosition - position;
@@ -300,7 +289,6 @@ bool AgentBase::CanSeePlayer(Grid& grid, bool checkFOV)
     return !hit.hit;
 }
 
-// ================================================================== RAYCAST
 RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist)
 {
     float len = VecLength(dir);
@@ -360,7 +348,6 @@ void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale)
     }
 }
 
-// ================================================================== PATROL POINTS
 void AgentBase::SetPatrolPoints()
 {
     patrolPoints[0] = position;

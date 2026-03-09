@@ -32,7 +32,7 @@ int main()
 
     Grid gameWorld(40, 30, 20.0f);
     Intrus joueur(sf::Vector2f(30.0f, 30.0f));
-    Goal objectif(sf::Vector2f(760.0f, 560.0f)); // bas droite
+    Goal objectif(sf::Vector2f(760.0f, 560.0f));
     HUD interfaceJoueur;
     EndScreen ecranFin(window.getSize());
 
@@ -50,8 +50,7 @@ int main()
     while (window.isOpen())
     {
         float deltaTime = clock.restart().asSeconds();
-
-        // --- EVENTS ---
+        
         while (const std::optional<sf::Event> event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
@@ -72,8 +71,7 @@ int main()
             if (gameOver && ecranFin.HandleEvent(*event, window))
                 ResetGame(joueur, ennemis, gameOver);
         }
-
-        // --- UPDATE ---
+        
         if (!gameOver)
         {
             joueur.Update(deltaTime, gameWorld);
@@ -109,13 +107,11 @@ int main()
                 states.push_back(&ennemis[i].GetEnnemyStateMachine());
             interfaceJoueur.Update(deltaTime, states);
         }
-
-        // --- PATHFINDING DEBUG ---
+        
         std::vector<sf::Vector2f> debugPath;
         if (showDebugPath && !gameOver)
             debugPath = Pathfinder::FindPath(gameWorld, ennemis[0].GetPosition(), joueur.GetPosition());
-
-        // --- RENDER ---
+        
         window.clear(sf::Color::Black);
 
         gameWorld.Draw(window);

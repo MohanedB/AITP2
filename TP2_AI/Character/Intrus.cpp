@@ -45,8 +45,7 @@ void Intrus::Update(float deltaTime, Grid& grid) {
         Node* node = grid.getNode(gridX, gridY);
         return (node == nullptr || node->isObstacle);
     };
-
-    // --- GESTION DES COLLISIONS ---
+    
     // Test de collision sur l'axe X (Gauche / Droite)
     if (!isWall(nextPosX.x - radius, position.y - radius + 1) &&
         !isWall(nextPosX.x + radius, position.y - radius + 1) &&
