@@ -1,20 +1,21 @@
 ﻿#include "EndScreen.h"
 
 EndScreen::EndScreen(sf::Vector2u size)
-    : titleText(font), subtitleText(font), retryText(font), windowSize(size)
+    : titleText(font), subtitleText(font), retryText(font)
 {
-    overlay.setSize(sf::Vector2f(size));
-    overlay.setFillColor(sf::Color(0, 0, 0, 190));
-
-    // Bouton Retry
-    retryBtn.setSize({ 200.f, 55.f });
-    retryBtn.setFillColor(sf::Color(60, 60, 200));
-    retryBtn.setOutlineThickness(2.f);
-    retryBtn.setOutlineColor(sf::Color::White);
+    windowSize = size;
 
     fontLoaded = font.openFromFile("arial.ttf") ||
                  font.openFromFile("C:/Windows/Fonts/arial.ttf") ||
                  font.openFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf");
+
+    overlay.setSize(sf::Vector2f(size));
+    overlay.setFillColor(sf::Color(0, 0, 0, 190));
+
+    retryBtn.setSize(sf::Vector2f(200.f, 55.f));
+    retryBtn.setFillColor(sf::Color(60, 60, 200));
+    retryBtn.setOutlineThickness(2.f);
+    retryBtn.setOutlineColor(sf::Color::White);
 
     if (fontLoaded)
     {
@@ -36,13 +37,14 @@ EndScreen::EndScreen(sf::Vector2u size)
 
 void EndScreen::Show(EndResult result)
 {
-    if (!fontLoaded) return;
+    if (!fontLoaded)
+        return;
 
     if (result == EndResult::Captured)
     {
-        titleText.setString("CAPTURÉ !");
+        titleText.setString("CAPTURE !");
         titleText.setFillColor(sf::Color::Red);
-        subtitleText.setString("L'intrus a ete capturé !");
+        subtitleText.setString("L'intrus a ete capture !");
     }
     else
     {
@@ -51,29 +53,23 @@ void EndScreen::Show(EndResult result)
         subtitleText.setString("L'intrus a atteint l'objectif !");
     }
 
-    Layout();
-}
-
-void EndScreen::Layout()
-{
     float cx = windowSize.x / 2.f;
     float cy = windowSize.y / 2.f;
 
     sf::FloatRect tb = titleText.getLocalBounds();
-    titleText.setOrigin({ tb.size.x / 2.f, tb.size.y / 2.f });
-    titleText.setPosition({ cx, cy - 80.f });
+    titleText.setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+    titleText.setPosition(sf::Vector2f(cx, cy - 80.f));
 
     sf::FloatRect sb = subtitleText.getLocalBounds();
-    subtitleText.setOrigin({ sb.size.x / 2.f, sb.size.y / 2.f });
-    subtitleText.setPosition({ cx, cy });
+    subtitleText.setOrigin(sf::Vector2f(sb.size.x / 2.f, sb.size.y / 2.f));
+    subtitleText.setPosition(sf::Vector2f(cx, cy));
 
-    // Bouton centré en bas
-    retryBtn.setOrigin({ 100.f, 27.5f });
-    retryBtn.setPosition({ cx, cy + 80.f });
+    retryBtn.setOrigin(sf::Vector2f(100.f, 27.5f));
+    retryBtn.setPosition(sf::Vector2f(cx, cy + 80.f));
 
     sf::FloatRect rb = retryText.getLocalBounds();
-    retryText.setOrigin({ rb.size.x / 2.f, rb.size.y / 2.f });
-    retryText.setPosition({ cx, cy + 80.f });
+    retryText.setOrigin(sf::Vector2f(rb.size.x / 2.f, rb.size.y / 2.f));
+    retryText.setPosition(sf::Vector2f(cx, cy + 80.f));
 }
 
 bool EndScreen::HandleEvent(const sf::Event& event, sf::RenderWindow& window)
@@ -82,20 +78,26 @@ bool EndScreen::HandleEvent(const sf::Event& event, sf::RenderWindow& window)
     {
         if (click->button == sf::Mouse::Button::Left)
         {
-            sf::Vector2f mouse(static_cast<float>(click->position.x),
-                               static_cast<float>(click->position.y));
-            if (retryBtn.getGlobalBounds().contains(mouse))
+            sf::Vector2f mousePos;
+            mousePos.x = static_cast<float>(click->position.x);
+            mousePos.y = static_cast<float>(click->position.y);
+
+            if (retryBtn.getGlobalBounds().contains(mousePos))
                 return true;
         }
     }
 
-    // Hover : changer la couleur du bouton
     if (event.is<sf::Event::MouseMoved>())
     {
         sf::Vector2i mouseI = sf::Mouse::getPosition(window);
-        sf::Vector2f mouse(static_cast<float>(mouseI.x), static_cast<float>(mouseI.y));
-        bool hovered = retryBtn.getGlobalBounds().contains(mouse);
-        retryBtn.setFillColor(hovered ? sf::Color(90, 90, 255) : sf::Color(60, 60, 200));
+        sf::Vector2f mousePos;
+        mousePos.x = static_cast<float>(mouseI.x);
+        mousePos.y = static_cast<float>(mouseI.y);
+
+        if (retryBtn.getGlobalBounds().contains(mousePos))
+            retryBtn.setFillColor(sf::Color(90, 90, 255));
+        else
+            retryBtn.setFillColor(sf::Color(60, 60, 200));
     }
 
     return false;
@@ -104,6 +106,7 @@ bool EndScreen::HandleEvent(const sf::Event& event, sf::RenderWindow& window)
 void EndScreen::Draw(sf::RenderWindow& window)
 {
     window.draw(overlay);
+
     if (fontLoaded)
     {
         window.draw(titleText);

@@ -10,18 +10,16 @@ public:
 
     void Show(EndResult result);
     void Draw(sf::RenderWindow& window);
-
     bool HandleEvent(const sf::Event& event, sf::RenderWindow& window);
 
 private:
+    sf::Vector2u windowSize;
+    sf::Font font;
+    bool fontLoaded;
+
     sf::RectangleShape overlay;
     sf::RectangleShape retryBtn;
-    sf::Font           font;
-    sf::Text           titleText;
-    sf::Text           subtitleText;
-    sf::Text           retryText;
-    bool               fontLoaded = false;
-    sf::Vector2u       windowSize;
-
-    void Layout();
+    sf::Text titleText;
+    sf::Text subtitleText;
+    sf::Text retryText;
 };

@@ -3,7 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include "../Map/Grid.h"
 
-class Pathfinder {
+class Pathfinder
+{
 public:
     static std::vector<sf::Vector2f> FindPath(Grid& grid, sf::Vector2f startPos, sf::Vector2f targetPos);
 
