@@ -106,7 +106,7 @@ int main()
             // Passer l'etat FSM de chaque ennemi au HUD
             std::vector<StateMachine*> states;
             for (int i = 0; i < (int)ennemis.size(); i++)
-                states.push_back(&ennemis[i].GetEnnemyState());
+                states.push_back(&ennemis[i].GetEnnemyStateMachine());
             interfaceJoueur.Update(deltaTime, states);
         }
 

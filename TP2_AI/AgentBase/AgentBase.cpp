@@ -59,7 +59,7 @@ sf::Vector2f AgentBase::GetPosition()
     return position;
 }
 
-StateMachine& AgentBase::GetEnnemyState()
+StateMachine& AgentBase::GetEnnemyStateMachine()
 {
     return ennemyState;
 }
@@ -336,9 +336,9 @@ void AgentBase::RayCast(sf::RenderWindow& window, Grid& grid, float mapScale)
 
     sf::Color rayColor;
     if (playerVisible)
-        rayColor = sf::Color(255, 100, 0, 180);
+        rayColor = sf::Color::Red;
     else
-        rayColor = sf::Color(255, 255, 0, 120);
+        rayColor = sf::Color::White;
 
     for (int i = 0; i < rayCount; i++)
     {

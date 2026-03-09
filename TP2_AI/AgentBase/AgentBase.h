@@ -24,7 +24,7 @@ public:
     sf::Vector2f GetPlayerPosition();
     sf::Vector2f GetPosition();
 
-    StateMachine& GetEnnemyState();
+    StateMachine& GetEnnemyStateMachine();
     bool HasCapturedPlayer();
 
     RayHit CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f dir, float maxDist);

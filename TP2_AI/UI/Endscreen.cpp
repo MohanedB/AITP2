@@ -42,9 +42,9 @@ void EndScreen::Show(EndResult result)
 
     if (result == EndResult::Captured)
     {
-        titleText.setString("CAPTURE !");
+        titleText.setString("CAPTURÉ !");
         titleText.setFillColor(sf::Color::Red);
-        subtitleText.setString("L'intrus a ete capture !");
+        subtitleText.setString("L'intrus a ete capturé !");
     }
     else
     {
