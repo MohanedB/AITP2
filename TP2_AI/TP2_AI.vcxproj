@@ -130,8 +130,11 @@
     <ClCompile Include="AI\Pathfinder.cpp" />
     <ClCompile Include="AgentBase\AgentBase.cpp" />
     <ClCompile Include="Character\Intrus.cpp" />
+    <ClCompile Include="Character\Key.cpp" />
     <ClCompile Include="FSM\StateMachine.cpp" />
     <ClCompile Include="Goal\Goal.cpp" />
+    <ClCompile Include="GOB\Blackboard.cpp" />
+    <ClCompile Include="GOB\GOBGoal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map\Grid.cpp" />
     <ClCompile Include="UI\Endscreen.cpp" />
@@ -141,8 +144,11 @@
     <ClInclude Include="AI\Pathfinder.h" />
     <ClInclude Include="AgentBase\AgentBase.h" />
     <ClInclude Include="Character\Intrus.h" />
+    <ClInclude Include="Character\Key.h" />
     <ClInclude Include="FSM\StateMachine.h" />
     <ClInclude Include="Goal\Goal.h" />
+    <ClInclude Include="GOB\Blackboard.h" />
+    <ClInclude Include="GOB\GOBGoal.h" />
     <ClInclude Include="Map\Grid.h" />
     <ClInclude Include="UI\Endscreen.h" />
     <ClInclude Include="UI\HUD.h" />
