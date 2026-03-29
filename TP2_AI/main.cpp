@@ -24,7 +24,7 @@ std::vector<AgentBase> CreerAgents() {
 
     std::vector<ConfigAgent> configs = {
         // Agent 0 - Zone haut-gauche
-        {{ 30,  90}, {{30,30},   {170,30},  {170,250}, {30,250}}},
+        {{ 30,  190}, {{30,30},   {170,30},  {170,250}, {30,250}}},
         // Agent 1 - Zone haut-centre
         {{320,  30}, {{320,30},  {480,30},  {480,150}, {320,150}}},
         // Agent 2 - Zone haut-droite
