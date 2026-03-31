@@ -88,8 +88,7 @@ int main()
     {
         float dt = clock.restart().asSeconds();
         if (dt > 0.05f) dt = 0.05f; // Éviter les gros sauts de temps
-
-        // ── Événements ──────────────────────────────────────────────
+        
         while (const std::optional<sf::Event> event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
