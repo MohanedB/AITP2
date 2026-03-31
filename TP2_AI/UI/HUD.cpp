@@ -82,8 +82,7 @@ void HUD::Update(float dt,
                  bool playerHasKey, bool nearExitNoKey, bool alertActive)
 {
     if (!fontLoaded) return;
-
-    // ── Reconstruire les textes agents si nécessaire ──
+    
     if (agentTexts.size() != agentGoals.size()) {
         agentTexts.clear();
         for (int i = 0; i < (int)agentGoals.size(); i++) {
@@ -98,8 +97,7 @@ void HUD::Update(float dt,
         agentTexts[i].setString("Ag" + std::to_string(i+1) + ": " + agentGoals[i]);
         agentTexts[i].setFillColor(ColorForGoal(agentGoals[i]));
     }
-
-    // ── Statut clé ──
+    
     if (nearExitNoKey)
         keyStatusText.setString("CLE: Sortie bloquee!"),
         keyStatusText.setFillColor(sf::Color(255, 80, 80));
@@ -109,20 +107,17 @@ void HUD::Update(float dt,
     else
         keyStatusText.setString("CLE: Non trouvee    "),
         keyStatusText.setFillColor(sf::Color(160, 160, 160));
-
-    // ── Blackboard ──
+    
     if (alertActive)
         alertStatusText.setString("BB: ALERTE ACTIVE"),
         alertStatusText.setFillColor(sf::Color(255, 80, 80));
     else
         alertStatusText.setString("BB: Calme          "),
         alertStatusText.setFillColor(sf::Color(80, 200, 80));
-
-    // ── FPS ──
+    
     if (dt > 0.0f)
         fpsText.setString("FPS: " + std::to_string(static_cast<int>(1.0f / dt)));
-
-    // ── Flash messages ──
+    
     if (playerHasKey && !prevHasKey)
         SetFlash("Cle obtenue ! Rejoignez la sortie !", sf::Color(255, 215, 0), 3.0f);
 
