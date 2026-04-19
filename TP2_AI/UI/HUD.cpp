@@ -85,7 +85,6 @@ void HUD::Update(float dt,
                  bool playerHasKey, bool nearExitNoKey, bool alertActive)
 {
     if (!fontLoaded) return;
-
     if (agentTexts.size() != agentGoals.size()) {
         agentTexts.clear();
         for (int i = 0; i < (int)agentGoals.size(); i++) {

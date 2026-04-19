@@ -45,18 +45,12 @@ AgentBase::AgentBase(int id, sf::Vector2f startPos, sf::Vector2f pausePos,
     forme.setPosition(position);
 }
 
-// ─────────────────────────────────────────────
-//  Accesseurs
-// ─────────────────────────────────────────────
 void         AgentBase::SetPlayerPosition(sf::Vector2f pos) { positionJoueur = pos; }
 sf::Vector2f AgentBase::GetPosition()    const { return position; }
 int          AgentBase::GetId()          const { return id; }
 bool         AgentBase::ACaptureJoueur() const { return Distance(position, positionJoueur) < distCapture; }
 std::string  AgentBase::GetGoalString()  const { return GoalToString(goalActif); }
 
-// ─────────────────────────────────────────────
-//  Mouvement
-// ─────────────────────────────────────────────
 sf::Vector2f AgentBase::Seek(sf::Vector2f cible) {
     sf::Vector2f direction = cible - position;
     float len = Longueur(direction);
@@ -145,9 +139,6 @@ void AgentBase::SuivreChemin(float dt, Grid& grid, bool utiliserArrive) {
     AppliquerMouvement(vel, dt, grid);
 }
 
-// ─────────────────────────────────────────────
-//  Vision (raycasting)
-// ─────────────────────────────────────────────
 bool AgentBase::VoitJoueur(Grid& grid) {
     sf::Vector2f versJoueur = positionJoueur - position;
     float dist = Longueur(versJoueur);
@@ -194,9 +185,6 @@ RayHit AgentBase::CastRay(Grid& grid, sf::Vector2f origin, sf::Vector2f directio
     return { false, pos, distMax };
 }
 
-// ─────────────────────────────────────────────
-//  GOB - Choisir le meilleur goal
-// ─────────────────────────────────────────────
 void AgentBase::ChoisirGoal(Blackboard& bb, std::vector<AgentBase*>& agents) {
     // Calculer un score pour chaque goal
     // Plus le score est élevé, plus c'est prioritaire
@@ -267,9 +255,6 @@ void AgentBase::ChoisirGoal(Blackboard& bb, std::vector<AgentBase*>& agents) {
     }
 }
 
-// ─────────────────────────────────────────────
-//  Comportements
-// ─────────────────────────────────────────────
 void AgentBase::FairePatrouille(float dt, Grid& grid) {
     if (pointsPatrouille.empty()) return;
 
@@ -362,9 +347,6 @@ void AgentBase::FairePause(float dt, Grid& grid, std::vector<AgentBase*>& agents
     SuivreChemin(dt, grid, true);
 }
 
-// ─────────────────────────────────────────────
-//  Update principal
-// ─────────────────────────────────────────────
 void AgentBase::Update(float dt, Grid& grid, Blackboard& bb, std::vector<AgentBase*>& agents) {
     if (cooldownChemin > 0.0f) cooldownChemin -= dt;
 
@@ -395,9 +377,6 @@ void AgentBase::Update(float dt, Grid& grid, Blackboard& bb, std::vector<AgentBa
         FairePause(dt, grid, agents);
 }
 
-// ─────────────────────────────────────────────
-//  Rendu
-// ─────────────────────────────────────────────
 void AgentBase::Draw(sf::RenderWindow& window) {
  
     if (goalActif == GOBGoal::Poursuivre)

@@ -56,6 +56,7 @@ int main() {
 
     HUD        hud;
     EndScreen  ecranFin(window.getSize());
+
     Blackboard bb;
 
     sf::Clock clock;
@@ -72,6 +73,7 @@ int main() {
 
         // ── Events ──────────────────────────────────────────────────────────
         while (const std::optional<sf::Event> event = window.pollEvent()) {
+
             if (event->is<sf::Event::Closed>())
                 window.close();
 
@@ -102,6 +104,7 @@ int main() {
             sf::Vector2f posJoueur = joueur.GetPosition();
 
             bool cleTaitRamassee = cle.IsPickedUp();
+
             cle.Update(posJoueur);
             if (!cleTaitRamassee && cle.IsPickedUp())
                 joueurALaCle = true;
@@ -122,6 +125,7 @@ int main() {
             }
 
             if (!gameOver) {
+
                 sf::Vector2f posSortie = sortie.GetPosition();
                 float dx = posJoueur.x - posSortie.x;
                 float dy = posJoueur.y - posSortie.y;
@@ -133,10 +137,12 @@ int main() {
                         ecranFin.Show(EndResult::Escaped);
                         gameOver = true;
                     } else {
+
                         procheSortieSansCle = true;
                     }
                 }
             }
+
 
             std::vector<std::string> etatsAgents;
             for (auto& a : ennemis)
@@ -167,6 +173,7 @@ int main() {
         }
 
         hud.Draw(window);
+
 
         if (gameOver)
             ecranFin.Draw(window);
