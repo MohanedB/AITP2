@@ -137,6 +137,7 @@
     <ClCompile Include="GOB\GOBGoal.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map\Grid.cpp" />
+    <ClCompile Include="Map\LevelGenerator.cpp" />
     <ClCompile Include="UI\Endscreen.cpp" />
     <ClCompile Include="UI\HUD.cpp" />
   </ItemGroup>
@@ -150,6 +151,7 @@
     <ClInclude Include="GOB\Blackboard.h" />
     <ClInclude Include="GOB\GOBGoal.h" />
     <ClInclude Include="Map\Grid.h" />
+    <ClInclude Include="Map\LevelGenerator.h" />
     <ClInclude Include="UI\Endscreen.h" />
     <ClInclude Include="UI\HUD.h" />
   </ItemGroup>

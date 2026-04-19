@@ -5,6 +5,7 @@
 #include "Character/Intrus.h"
 #include "Character/Key.h"
 #include "Map/Grid.h"
+#include "Map/LevelGenerator.h"
 #include "AI/Pathfinder.h"
 #include "UI/HUD.h"
 #include "UI/EndScreen.h"
@@ -12,173 +13,131 @@
 #include "AgentBase/AgentBase.h"
 #include "GOB/Blackboard.h"
 
-// Position du local des employés (break room)
-static const sf::Vector2f BREAK_ROOM_POS(400.0f, 300.0f);
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Création des 10 agents avec leurs zones de patrouille
-std::vector<AgentBase> CreerAgents() {
-    struct ConfigAgent {
-        sf::Vector2f spawn;
-        std::vector<sf::Vector2f> patrouille;
-    };
-
-    std::vector<ConfigAgent> configs = {
-        // Agent 0 - Zone haut-gauche
-        {{ 30,  190}, {{30,30},   {170,30},  {170,250}, {30,250}}},
-        // Agent 1 - Zone haut-centre
-        {{320,  30}, {{320,30},  {480,30},  {480,150}, {320,150}}},
-        // Agent 2 - Zone haut-droite
-        {{580,  30}, {{580,30},  {760,30},  {760,200}, {580,200}}},
-        // Agent 3 - Zone milieu-gauche
-        {{150, 350}, {{150,340}, {170,340}, {150,530}, {30,530}}},
-        // Agent 4 - Zone centre-bas
-        {{330, 450}, {{330,450}, {490,450}, {490,570}, {330,570}}},
-        // Agent 5 - Zone milieu-droite
-        {{610, 220}, {{610,220}, {760,220}, {760,400}, {650,410}}},
-        // Agent 6 - Zone bas-gauche
-        {{ 30, 500}, {{30,560},  {150,560}, {150,450}, {30,450}}},
-        // Agent 7 - Zone bas-centre
-        {{280, 500}, {{280,570}, {460,570}, {460,450}, {280,450}}},
-        // Agent 8 - Zone bas-droite
-        {{600, 500}, {{600,560}, {760,560}, {760,440}, {600,440}}},
-        // Agent 9 - Patrouille large centre
-        {{390, 310}, {{390,280}, {540,280}, {540,420}, {370,420}}},
-    };
-
+std::vector<AgentBase> CreerAgents(const LevelData& data) {
     std::vector<AgentBase> agents;
-    for (int i = 0; i < (int)configs.size(); i++) {
-        agents.emplace_back(i, configs[i].spawn, BREAK_ROOM_POS, configs[i].patrouille);
-    }
+    int n = (int)data.agentSpawns.size();
+    for (int i = 0; i < n; i++)
+        agents.emplace_back(i, data.agentSpawns[i], data.breakRoomPos, data.patrolRoutes[i]);
     return agents;
 }
 
-// Réinitialiser la partie
-void ResetGame(Intrus& joueur, std::vector<AgentBase>& ennemis,
-               Key& cle, Blackboard& bb, bool& gameOver, bool& joueurALaCle)
+void ResetGame(Grid& grid, LevelData& data,
+               Intrus& joueur, std::vector<AgentBase>& ennemis,
+               Key& cle, Goal& sortie,
+               Blackboard& bb, bool& gameOver, bool& joueurALaCle)
 {
-    joueur       = Intrus(sf::Vector2f(30.0f, 30.0f));
-    ennemis      = CreerAgents();
-    cle          = Key(sf::Vector2f(390.0f, 550.0f));
+    data    = LevelGenerator::Generate(grid);
+    joueur  = Intrus(data.playerSpawn);
+    ennemis = CreerAgents(data);
+    cle     = Key(data.keyPos);
+    sortie  = Goal(data.exitPos);
     bb.EffacerAlerte();
     gameOver     = false;
     joueurALaCle = false;
 }
 
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode({1000, 600}), "PGJ1403 - TP3 GOB Multi-Agents");
+// ─────────────────────────────────────────────────────────────────────────────
+
+int main() {
+    sf::RenderWindow window(sf::VideoMode({ 1000, 600 }),
+                            "PGJ1403 - TP4 Generation Procedurale");
     window.setFramerateLimit(60);
 
-    // Créer le monde
-    Grid  gameWorld(40, 30, 20.0f);
-    Goal  sortie(sf::Vector2f(760.0f, 560.0f));    // Sortie en bas-droite (bleue)
-    Key   cle(sf::Vector2f(390.0f, 550.0f));        // Clé cachée bas-centre (dorée)
+    Grid grid(40, 30, 20.0f);
 
-    // Créer le joueur et les ennemis
-    Intrus               joueur(sf::Vector2f(30.0f, 30.0f));
-    std::vector<AgentBase> ennemis = CreerAgents();
+    LevelData data = LevelGenerator::Generate(grid);
 
-    // UI
-    HUD       hud;
-    EndScreen ecranFin(window.getSize());
+    Goal   sortie(data.exitPos);
+    Key    cle(data.keyPos);
+    Intrus joueur(data.playerSpawn);
+    std::vector<AgentBase> ennemis = CreerAgents(data);
 
-    // Blackboard partagé entre tous les agents
+    HUD        hud;
+    EndScreen  ecranFin(window.getSize());
     Blackboard bb;
 
     sf::Clock clock;
-    bool gameOver     = false;
-    bool joueurALaCle = false;
+    bool gameOver            = false;
+    bool joueurALaCle        = false;
     bool procheSortieSansCle = false;
 
-    while (window.isOpen())
-    {
-        float dt = clock.restart().asSeconds();
-        if (dt > 0.05f) dt = 0.05f; // Éviter les gros sauts de temps
+    // Press H to show/hide the patrol route dots on the map
+    bool showPatrolRoutes = true;
 
-        // ── Événements ──────────────────────────────────────────────
-        while (const std::optional<sf::Event> event = window.pollEvent())
-        {
+    while (window.isOpen()) {
+        float dt = clock.restart().asSeconds();
+        if (dt > 0.05f) dt = 0.05f;
+
+        // ── Events ──────────────────────────────────────────────────────────
+        while (const std::optional<sf::Event> event = window.pollEvent()) {
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            if (const auto* key = event->getIf<sf::Event::KeyPressed>())
-            {
+            if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
                 if (key->code == sf::Keyboard::Key::Escape)
                     window.close();
 
-                // Rejouer avec R quand la partie est terminée
+                // H — toggle patrol route visibility
+                if (key->code == sf::Keyboard::Key::H)
+                    showPatrolRoutes = !showPatrolRoutes;
+
+                // R — restart with a brand-new map
                 if (key->code == sf::Keyboard::Key::R && gameOver)
-                    ResetGame(joueur, ennemis, cle, bb, gameOver, joueurALaCle);
+                    ResetGame(grid, data, joueur, ennemis, cle, sortie,
+                              bb, gameOver, joueurALaCle);
             }
 
-            // Clic sur le bouton "Rejouer"
             if (gameOver && ecranFin.HandleEvent(*event, window))
-                ResetGame(joueur, ennemis, cle, bb, gameOver, joueurALaCle);
+                ResetGame(grid, data, joueur, ennemis, cle, sortie,
+                          bb, gameOver, joueurALaCle);
         }
 
-        // ── Logique de jeu ──────────────────────────────────────────
-        if (!gameOver)
-        {
-            // Mettre à jour le blackboard (timer d'alerte)
+        // ── Update ──────────────────────────────────────────────────────────
+        if (!gameOver) {
             bb.Update(dt);
 
-            // Mettre à jour le joueur
-            joueur.Update(dt, gameWorld);
+            joueur.Update(dt, grid);
             sf::Vector2f posJoueur = joueur.GetPosition();
 
-            // Vérifier si le joueur ramasse la clé
-            bool cletaitRamassee = cle.IsPickedUp();
+            bool cleTaitRamassee = cle.IsPickedUp();
             cle.Update(posJoueur);
-            if (!cletaitRamassee && cle.IsPickedUp())
+            if (!cleTaitRamassee && cle.IsPickedUp())
                 joueurALaCle = true;
 
-            // Construire la liste de pointeurs pour la communication inter-agents
             std::vector<AgentBase*> pointeursAgents;
             for (auto& a : ennemis)
                 pointeursAgents.push_back(&a);
 
-            // Mettre à jour chaque ennemi
-            for (auto& ennemi : ennemis)
-            {
+            for (auto& ennemi : ennemis) {
                 ennemi.SetPlayerPosition(posJoueur);
-                ennemi.Update(dt, gameWorld, bb, pointeursAgents);
+                ennemi.Update(dt, grid, bb, pointeursAgents);
 
-                // Vérifier si un ennemi a capturé le joueur
-                if (ennemi.ACaptureJoueur())
-                {
+                if (ennemi.ACaptureJoueur()) {
                     ecranFin.Show(EndResult::Captured);
                     gameOver = true;
                     break;
                 }
             }
 
-            // Vérifier si le joueur atteint la sortie
-            if (!gameOver)
-            {
+            if (!gameOver) {
                 sf::Vector2f posSortie = sortie.GetPosition();
                 float dx = posJoueur.x - posSortie.x;
                 float dy = posJoueur.y - posSortie.y;
                 float distSortie = std::sqrt(dx * dx + dy * dy);
 
                 procheSortieSansCle = false;
-
-                if (distSortie < 30.0f)
-                {
-                    if (joueurALaCle)
-                    {
-                        // Joueur gagne !
+                if (distSortie < 30.0f) {
+                    if (joueurALaCle) {
                         ecranFin.Show(EndResult::Escaped);
                         gameOver = true;
-                    }
-                    else
-                    {
-                        // Feedback : il faut la clé d'abord
+                    } else {
                         procheSortieSansCle = true;
                     }
                 }
             }
 
-            // Mettre à jour le HUD avec les états des agents
             std::vector<std::string> etatsAgents;
             for (auto& a : ennemis)
                 etatsAgents.push_back(a.GetGoalString());
@@ -186,30 +145,29 @@ int main()
             hud.Update(dt, etatsAgents, joueurALaCle, procheSortieSansCle, bb.alerteActive);
         }
 
-        // ── Rendu ────────────────────────────────────────────────────
+        // ── Draw ────────────────────────────────────────────────────────────
         window.clear(sf::Color(12, 12, 18));
 
-        // Dessiner la carte
-        gameWorld.Draw(window);
+        grid.Draw(window);
 
-        // Dessiner la sortie et la clé
+        // Patrol routes are drawn under everything else.
+        // Press H to hide them.
+        if (showPatrolRoutes) {
+            for (auto& ennemi : ennemis)
+                ennemi.DrawPatrolRoute(window);
+        }
+
         sortie.Draw(window);
         cle.Draw(window);
-
-        // Dessiner le joueur
         joueur.Draw(window);
 
-        // Dessiner les ennemis et leurs cônes de vision
-        for (auto& ennemi : ennemis)
-        {
-            ennemi.DrawRayCast(window, gameWorld);
+        for (auto& ennemi : ennemis) {
+            ennemi.DrawRayCast(window, grid);
             ennemi.Draw(window);
         }
 
-        // Dessiner le HUD
         hud.Draw(window);
 
-        // Dessiner l'écran de fin si nécessaire
         if (gameOver)
             ecranFin.Draw(window);
 

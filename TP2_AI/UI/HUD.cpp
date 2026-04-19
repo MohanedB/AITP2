@@ -40,9 +40,8 @@ HUD::HUD()
     legendText.setFillColor(sf::Color(160, 160, 160));
     legendText.setPosition(sf::Vector2f(808.f, 400.f));
     legendText.setString(
-        "Rouge fonce : Surveille\n"
+        "Gris        : Patrouille\n"
         "Rouge vif   : Poursuite\n"
-        "Orange      : Intercepte\n"
         "Jaune       : Alerte\n"
         "Cyan        : En pause\n"
         "Vert        : Jase"
@@ -50,21 +49,25 @@ HUD::HUD()
 
     instructionText.setCharacterSize(12);
     instructionText.setFillColor(sf::Color(130, 130, 130));
-    instructionText.setPosition(sf::Vector2f(808.f, 555.f));
-    instructionText.setString("WASD:Bouger  ESC:Quitter");
+    instructionText.setPosition(sf::Vector2f(808.f, 540.f));
+    instructionText.setString(
+        "WASD : Bouger\n"
+        "H    : Routes patrouille\n"
+        "ESC  : Quitter"
+    );
 
     flashText.setCharacterSize(28);
     flashText.setStyle(sf::Text::Bold);
     flashText.setPosition(sf::Vector2f(400.f, 290.f));
 }
 
+// Strings must match exactly what GoalToString() returns in GOBGoal.h
 sf::Color HUD::ColorForGoal(const std::string& goal) {
-    if (goal == "Poursuite")       return sf::Color(255,  50,  50);
-    if (goal == "Intercepter")     return sf::Color(255, 160,   0);
-    if (goal == "Repond Alerte")   return sf::Color(255, 220,  50);
-    if (goal == "En Pause")        return sf::Color( 50, 200, 255);
-    if (goal == "Rejoint Collegue")return sf::Color(100, 255, 120);
-    return sf::Color(200, 200, 200); // Surveiller Zone
+    if (goal == "Poursuite") return sf::Color(255,  50,  50);  // rouge vif
+    if (goal == "Alerte")    return sf::Color(255, 220,  50);  // jaune
+    if (goal == "Pause")     return sf::Color( 50, 200, 255);  // cyan
+    if (goal == "Jase")      return sf::Color(100, 255, 120);  // vert
+    return sf::Color(160, 160, 160);                            // gris = Patrouille
 }
 
 void HUD::SetFlash(const std::string& msg, sf::Color col, float duration) {
@@ -83,7 +86,6 @@ void HUD::Update(float dt,
 {
     if (!fontLoaded) return;
 
-    // ── Reconstruire les textes agents si nécessaire ──
     if (agentTexts.size() != agentGoals.size()) {
         agentTexts.clear();
         for (int i = 0; i < (int)agentGoals.size(); i++) {
@@ -95,34 +97,32 @@ void HUD::Update(float dt,
     }
 
     for (int i = 0; i < (int)agentGoals.size(); i++) {
-        agentTexts[i].setString("Ag" + std::to_string(i+1) + ": " + agentGoals[i]);
+        agentTexts[i].setString("Ag" + std::to_string(i + 1) + ": " + agentGoals[i]);
         agentTexts[i].setFillColor(ColorForGoal(agentGoals[i]));
     }
 
-    // ── Statut clé ──
-    if (nearExitNoKey)
-        keyStatusText.setString("CLE: Sortie bloquee!"),
+    if (nearExitNoKey) {
+        keyStatusText.setString("CLE: Sortie bloquee!");
         keyStatusText.setFillColor(sf::Color(255, 80, 80));
-    else if (playerHasKey)
-        keyStatusText.setString("CLE: En possession  "),
+    } else if (playerHasKey) {
+        keyStatusText.setString("CLE: En possession  ");
         keyStatusText.setFillColor(sf::Color(255, 215, 0));
-    else
-        keyStatusText.setString("CLE: Non trouvee    "),
+    } else {
+        keyStatusText.setString("CLE: Non trouvee    ");
         keyStatusText.setFillColor(sf::Color(160, 160, 160));
+    }
 
-    // ── Blackboard ──
-    if (alertActive)
-        alertStatusText.setString("BB: ALERTE ACTIVE"),
+    if (alertActive) {
+        alertStatusText.setString("BB: ALERTE ACTIVE");
         alertStatusText.setFillColor(sf::Color(255, 80, 80));
-    else
-        alertStatusText.setString("BB: Calme          "),
+    } else {
+        alertStatusText.setString("BB: Calme          ");
         alertStatusText.setFillColor(sf::Color(80, 200, 80));
+    }
 
-    // ── FPS ──
     if (dt > 0.0f)
         fpsText.setString("FPS: " + std::to_string(static_cast<int>(1.0f / dt)));
 
-    // ── Flash messages ──
     if (playerHasKey && !prevHasKey)
         SetFlash("Cle obtenue ! Rejoignez la sortie !", sf::Color(255, 215, 0), 3.0f);
 
@@ -148,7 +148,6 @@ void HUD::Draw(sf::RenderWindow& window) {
     window.draw(instructionText);
 
     if (flashTimer > 0.0f) {
-        // Fond semi-transparent pour le flash
         sf::RectangleShape bg(sf::Vector2f(660.f, 50.f));
         bg.setFillColor(sf::Color(0, 0, 0, 180));
         bg.setOrigin({ 330.f, 25.f });

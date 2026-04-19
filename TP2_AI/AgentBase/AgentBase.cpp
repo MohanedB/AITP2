@@ -399,20 +399,22 @@ void AgentBase::Update(float dt, Grid& grid, Blackboard& bb, std::vector<AgentBa
 //  Rendu
 // ─────────────────────────────────────────────
 void AgentBase::Draw(sf::RenderWindow& window) {
-    // Changer de couleur selon l'état
+ 
     if (goalActif == GOBGoal::Poursuivre)
-        forme.setFillColor(sf::Color(255, 30, 30));       // rouge vif
+        forme.setFillColor(sf::Color(255, 30,  30));   // rouge vif  = poursuite
     else if (goalActif == GOBGoal::RepondreAlerte)
-        forme.setFillColor(sf::Color(255, 180, 0));       // orange
+        forme.setFillColor(sf::Color(255, 180,  0));   // orange     = alerte
     else if (goalActif == GOBGoal::AllerEnPause)
-        forme.setFillColor(sf::Color(30, 180, 255));      // cyan
+        forme.setFillColor(sf::Color(30,  180, 255));  // cyan       = pause
     else if (goalActif == GOBGoal::JaserCollegue)
-        forme.setFillColor(sf::Color(80, 255, 80));       // vert
+        forme.setFillColor(sf::Color(80,  255,  80));  // vert       = jase
     else
-        forme.setFillColor(sf::Color(180, 50, 50));       // rouge foncé (patrouille)
-
+        forme.setFillColor(sf::Color(130, 130, 130));  // GRIS = patrouille
+    // (was dark red before which looked exactly like pursuit red — confusing!)
+ 
     window.draw(forme);
 }
+ 
 
 void AgentBase::DrawRayCast(sf::RenderWindow& window, Grid& grid) {
     const float PI   = 3.14159265f;
@@ -439,5 +441,34 @@ void AgentBase::DrawRayCast(sf::RenderWindow& window, Grid& grid) {
         ligne[1].color    = sf::Color(couleurRayon.r, couleurRayon.g, couleurRayon.b, 0);
 
         window.draw(ligne, 2, sf::PrimitiveType::Lines);
+    }
+}
+
+void AgentBase::DrawPatrolRoute(sf::RenderWindow& window) const {
+    if (pointsPatrouille.size() < 2) return;
+ 
+    sf::Color lineColor(150, 150, 255, 55);  // subtle blue, mostly transparent
+    sf::Color dotColor (150, 150, 255, 110);
+ 
+    int n = (int)pointsPatrouille.size();
+ 
+    for (int i = 0; i < n; i++) {
+        sf::Vector2f from = pointsPatrouille[i];
+        sf::Vector2f to   = pointsPatrouille[(i + 1) % n]; // loops back to start
+ 
+        // Line segment
+        sf::Vertex line[2];
+        line[0].position = from;
+        line[0].color    = lineColor;
+        line[1].position = to;
+        line[1].color    = lineColor;
+        window.draw(line, 2, sf::PrimitiveType::Lines);
+ 
+        // Waypoint dot
+        sf::CircleShape dot(4.f);
+        dot.setFillColor(dotColor);
+        dot.setOrigin({ 4.f, 4.f });
+        dot.setPosition(from);
+        window.draw(dot);
     }
 }

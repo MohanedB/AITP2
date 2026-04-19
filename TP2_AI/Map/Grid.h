@@ -3,42 +3,48 @@
 #include <vector>
 #include <string>
 
-// Structure d'un Nœud mise à jour pour le graphe de navigation A*
 struct Node {
-    int gridX;
-    int gridY;
-    bool isObstacle;
-    
-    // Variables pour l'algorithme A*
-    float gCost = 0; // Coût du départ au nœud actuel
-    float hCost = 0; // Estimation du coût du nœud à l'arrivée (Heuristique)
-    Node* parent = nullptr;
+    int   gridX;
+    int   gridY;
+    bool  isObstacle;
 
-    Node(int x, int y, bool obstacle = false) 
+    float  gCost  = 0;
+    float  hCost  = 0;
+    Node*  parent = nullptr;
+
+    Node(int x, int y, bool obstacle = false)
         : gridX(x), gridY(y), isObstacle(obstacle) {}
 
-    // FCost = G + H (Priorité totale)
     float getFCost() const { return gCost + hCost; }
 };
 
 class Grid {
 private:
-    int width;
-    int height;
+    int   width;
+    int   height;
     float tileSize;
     std::vector<std::vector<Node>> nodes;
 
 public:
     Grid(int w, int h, float size);
 
+    // Called once at construction — now empty (LevelGenerator does the work)
     void GenerateLevel();
+
     void SetObstacle(int x, int y, bool isObstacle);
 
-    float getTileSize() const { return tileSize; }
-    Node* getNode(int x, int y);
+    // NEW — set every tile to obstacle (called before maze generation)
+    void SetAllObstacles();
 
+    float getTileSize() const { return tileSize; }
+
+    // NEW — needed by LevelGenerator
+    int getWidth()  const { return width;  }
+    int getHeight() const { return height; }
+
+    Node*              getNode(int x, int y);
     std::vector<Node*> getNeighbors(Node* node);
-    void ResetNodes();
+    void               ResetNodes();
 
     void Draw(sf::RenderWindow& window);
 };
