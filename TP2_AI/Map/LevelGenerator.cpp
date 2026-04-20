@@ -4,21 +4,9 @@
 #include <cstdlib>
 #include <ctime>
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  SETTINGS — the only numbers you need to touch
-//
-//  NUM_ROOMS : how many big open areas to carve into the maze
-//              more = easier map, less = more maze-like
-//  ROOM_SIZE : how wide/tall each room is in tiles (must be odd: 3, 5, 7, 9)
-//              bigger = more open space
-// ─────────────────────────────────────────────────────────────────────────────
+
 static const int NUM_ROOMS = 15;
 static const int ROOM_SIZE = 5;
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Tiny helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 float LevelGenerator::Dist(sf::Vector2f a, sf::Vector2f b) {
     float dx = a.x - b.x;
@@ -46,18 +34,6 @@ std::vector<sf::Vector2f> LevelGenerator::GetOpenTiles(Grid& grid) {
     return result;
 }
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Step 1 — DFS backtracking maze
-//
-//  The grid is treated as a smaller grid of "cells":
-//    cell (i, j)  sits at tile position  (1 + 2*i,  1 + 2*j)
-//    the wall between (i,j) and (i+1,j) is tile (2 + 2*i,  1 + 2*j)
-//
-//  We start at cell (0,0), randomly visit neighbours, and knock down
-//  the wall between us and each neighbour. If we get stuck we backtrack.
-//  Result: every cell is connected — no isolated areas.
-// ─────────────────────────────────────────────────────────────────────────────
 void LevelGenerator::CarveMaze(Grid& grid) {
     int w     = grid.getWidth();
     int h     = grid.getHeight();
@@ -138,9 +114,6 @@ void LevelGenerator::AddRooms(Grid& grid) {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Step 3 — Place key elements
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Closest open tile to the top-left corner — player start
 sf::Vector2f LevelGenerator::PlaceSpawn(Grid& grid, const std::vector<sf::Vector2f>& open) {
@@ -190,13 +163,7 @@ sf::Vector2f LevelGenerator::PlaceMiddle(sf::Vector2f spawn, sf::Vector2f exit,
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Step 4 — Patrol routes
-//
-//  Pick 4 open tiles near the agent's spawn that are spread apart from
-//  each other. Simple greedy: always pick the tile farthest from
-//  already-chosen points, but within 300px of home.
-// ─────────────────────────────────────────────────────────────────────────────
+
 std::vector<sf::Vector2f> LevelGenerator::MakePatrol(sf::Vector2f spawn,
                                                        const std::vector<sf::Vector2f>& open)
 {
@@ -229,9 +196,7 @@ std::vector<sf::Vector2f> LevelGenerator::MakePatrol(sf::Vector2f spawn,
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Generate — ties all the steps together
-// ─────────────────────────────────────────────────────────────────────────────
+
 LevelData LevelGenerator::Generate(Grid& grid, int numAgents) {
     srand((unsigned int)time(nullptr));
 

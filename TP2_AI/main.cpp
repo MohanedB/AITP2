@@ -13,8 +13,6 @@
 #include "AgentBase/AgentBase.h"
 #include "GOB/Blackboard.h"
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 std::vector<AgentBase> CreerAgents(const LevelData& data) {
     std::vector<AgentBase> agents;
     int n = (int)data.agentSpawns.size();
@@ -37,8 +35,6 @@ void ResetGame(Grid& grid, LevelData& data,
     gameOver     = false;
     joueurALaCle = false;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 int main() {
     sf::RenderWindow window(sf::VideoMode({ 1000, 600 }),
@@ -70,8 +66,7 @@ int main() {
     while (window.isOpen()) {
         float dt = clock.restart().asSeconds();
         if (dt > 0.05f) dt = 0.05f;
-
-        // ── Events ──────────────────────────────────────────────────────────
+        
         while (const std::optional<sf::Event> event = window.pollEvent()) {
 
             if (event->is<sf::Event::Closed>())
@@ -95,8 +90,7 @@ int main() {
                 ResetGame(grid, data, joueur, ennemis, cle, sortie,
                           bb, gameOver, joueurALaCle);
         }
-
-        // ── Update ──────────────────────────────────────────────────────────
+        
         if (!gameOver) {
             bb.Update(dt);
 
@@ -150,8 +144,7 @@ int main() {
 
             hud.Update(dt, etatsAgents, joueurALaCle, procheSortieSansCle, bb.alerteActive);
         }
-
-        // ── Draw ────────────────────────────────────────────────────────────
+        
         window.clear(sf::Color(12, 12, 18));
 
         grid.Draw(window);
