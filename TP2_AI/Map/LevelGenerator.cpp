@@ -90,12 +90,6 @@ void LevelGenerator::CarveMaze(Grid& grid) {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Step 2 — Carve open rooms
-//
-//  The maze alone is narrow corridors. We carve NUM_ROOMS bigger squares
-//  so there is open space for agents to patrol and for the player to dodge.
-// ─────────────────────────────────────────────────────────────────────────────
 void LevelGenerator::AddRooms(Grid& grid) {
     int w    = grid.getWidth();
     int h    = grid.getHeight();
